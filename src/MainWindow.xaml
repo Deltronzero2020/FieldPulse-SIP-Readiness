@@ -167,11 +167,11 @@
                         <StackPanel Orientation="Horizontal" Margin="0,12,0,0" Visibility="{Binding IsManualActionVisible}">
                             <Border Background="#FFF8C5" CornerRadius="4" Padding="10,6" Margin="0,0,8,0">
                                 <TextBlock FontSize="11" Foreground="#9A6700" FontWeight="SemiBold"
-                                           Text="⚠  Disable SIP ALG in your router"/>
+                                           Text="⚠  Check your router settings" TextWrapping="Wrap"/>
                             </Border>
                             <Border Background="#FFF8C5" CornerRadius="4" Padding="10,6">
                                 <TextBlock FontSize="11" Foreground="#9A6700" FontWeight="SemiBold"
-                                           Text="⚠  Factory reset SIP phones before provisioning"/>
+                                           Text="⚠  Reset phones before setup" TextWrapping="Wrap"/>
                             </Border>
                         </StackPanel>
                     </StackPanel>
@@ -235,17 +235,25 @@
                 <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
                     <Button x:Name="btnUserGuide"
                             Style="{StaticResource SecondaryButton}"
-                            Content="?  User Guide"
-                            Width="110"
                             Click="BtnUserGuide_Click"
-                            AutomationProperties.Name="Open user guide"/>
+                            Width="130"
+                            AutomationProperties.Name="Open user guide">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#x2753;" FontSize="12" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                            <TextBlock Text="User Guide" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
 
                     <Button x:Name="btnITGuide"
                             Style="{StaticResource SecondaryButton}"
-                            Content="?  IT Admin Guide"
-                            Width="130" Margin="8,0,0,0"
                             Click="BtnITGuide_Click"
-                            AutomationProperties.Name="Open IT admin guide"/>
+                            Width="150" Margin="8,0,0,0"
+                            AutomationProperties.Name="Open IT admin guide">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#x1F6E0;" FontSize="12" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                            <TextBlock Text="IT Admin Guide" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
 
                     <Button x:Name="btnClose"
                             Style="{StaticResource SecondaryButton}"
