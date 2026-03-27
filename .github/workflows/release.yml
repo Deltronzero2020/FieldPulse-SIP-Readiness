@@ -53,26 +53,27 @@ jobs:
           Write-Host "Secrets injected into PowerShell script"
         shell: pwsh
 
-      - name: Install wkhtmltopdf for PDF generation
-        run: choco install wkhtmltopdf -y --no-progress
+      - name: Install pandoc and wkhtmltopdf for PDF generation
+        run: choco install pandoc wkhtmltopdf -y --no-progress
         shell: pwsh
 
       - name: Generate PDFs and embed in WPF project
         run: |
-          # Add wkhtmltopdf to PATH
-          $env:PATH += ";C:\Program Files\wkhtmltopdf\bin"
+          # Refresh PATH to include newly installed tools
+          $env:PATH = [System.Environment]::GetEnvironmentVariable("PATH", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("PATH", "User")
+          $env:PATH += ";C:\Program Files\wkhtmltopdf\bin;C:\Program Files\Pandoc"
 
           # Create WPF/Docs folder for embedded resources
           New-Item -ItemType Directory -Path "WPF/Docs" -Force
 
           # Convert USER-GUIDE.md to PDF (embedded in EXE)
-          pandoc USER-GUIDE.md -o "WPF/Docs/USER-GUIDE.pdf" `
+          & "C:\Program Files\Pandoc\pandoc.exe" USER-GUIDE.md -o "WPF/Docs/USER-GUIDE.pdf" `
             --pdf-engine=wkhtmltopdf `
             --metadata title="FieldPulse SIP Readiness - User Guide" `
             -V margin-top=20mm -V margin-bottom=20mm -V margin-left=20mm -V margin-right=20mm
 
           # Convert IT-ADMIN-GUIDE.md to PDF (embedded in EXE)
-          pandoc IT-ADMIN-GUIDE.md -o "WPF/Docs/IT-ADMIN-GUIDE.pdf" `
+          & "C:\Program Files\Pandoc\pandoc.exe" IT-ADMIN-GUIDE.md -o "WPF/Docs/IT-ADMIN-GUIDE.pdf" `
             --pdf-engine=wkhtmltopdf `
             --metadata title="FieldPulse SIP Readiness - IT Admin Guide" `
             -V margin-top=20mm -V margin-bottom=20mm -V margin-left=20mm -V margin-right=20mm
