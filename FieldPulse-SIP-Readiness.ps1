@@ -56,6 +56,15 @@ $MAX_CUSTOMER_NAME_LEN  = 100     # Max length for customer name field
 $MAX_ATTENDEE_NAME_LEN  = 80      # Max length for attendee name
 $MAX_ATTENDEE_EMAIL_LEN = 120     # Max length for attendee email
 
+# Rate limiting (client-side)
+$MAX_SUBMISSIONS_PER_SESSION = 3       # Max submissions before requiring app restart
+$SUBMISSION_COOLDOWN_SECONDS = 60      # Minimum seconds between submissions
+
+# Session state for submissions
+$script:submissionCount    = 0
+$script:lastSubmissionTime = $null
+$script:lastOnboarding     = $null
+
 # -------------------------------------------------------------
 # LOAD WINFORMS
 # -------------------------------------------------------------
@@ -325,7 +334,19 @@ $btnClose.FlatStyle   = 'Flat'
 $btnClose.FlatAppearance.BorderColor = $clrBorder
 $btnClose.Cursor      = 'Hand'
 
-$form.Controls.AddRange(@($btnRun, $btnSend, $btnSave, $btnClose))
+$btnEditResend             = New-Object System.Windows.Forms.Button
+$btnEditResend.Text        = 'Edit & Resend'
+$btnEditResend.Font        = $fontBtn
+$btnEditResend.Size        = New-Object System.Drawing.Size(130, 40)
+$btnEditResend.Location    = New-Object System.Drawing.Point(564, 582)
+$btnEditResend.BackColor   = $clrBlue
+$btnEditResend.ForeColor   = [System.Drawing.Color]::White
+$btnEditResend.FlatStyle   = 'Flat'
+$btnEditResend.FlatAppearance.BorderSize = 0
+$btnEditResend.Cursor      = 'Hand'
+$btnEditResend.Visible     = $false
+
+$form.Controls.AddRange(@($btnRun, $btnSend, $btnSave, $btnEditResend, $btnClose))
 
 # -------------------------------------------------------------
 # RUN CHECKS LOGIC
@@ -1221,6 +1242,8 @@ function Invoke-PhoneCSVValidation {
 # ONBOARDING SUBMISSION DIALOG
 # -------------------------------------------------------------
 function Show-SubmissionDialog {
+    param([hashtable]$PreviousData = $null)
+
     $dlg                 = New-Object System.Windows.Forms.Form
     $dlg.Text            = 'Complete Your Submission'
     $dlg.StartPosition   = 'CenterParent'
@@ -1695,6 +1718,38 @@ function Show-SubmissionDialog {
     $script:dlgData        = $null
     $script:phoneCSVLoaded = $null
 
+    # Pre-populate fields if previous data is provided (Edit & Resend)
+    if ($PreviousData) {
+        $txtPhoneCount.Text = $PreviousData.PhoneCountText
+        $txtModels.Text     = $PreviousData.PhoneModels
+        $cboBrand.Text      = $PreviousData.PhoneBrand
+        $cboConfigType.Text = $PreviousData.ConfigType
+        $txtMac.Text        = $PreviousData.MacSerials
+        $txtNotes.Text      = $PreviousData.ConfigNotes
+        $cboTime.Text       = $PreviousData.PreferredTime
+        $chk1.Checked       = $PreviousData.ConfirmedFormerProvider
+        $chk2.Checked       = $PreviousData.ConfirmedFactoryReset
+        $chk3.Checked       = $PreviousData.ConfirmedFirmware
+        # Restore attendees
+        if ($PreviousData.Attendees) {
+            $atts = $PreviousData.Attendees -split ';'
+            foreach ($att in $atts) {
+                $att = $att.Trim()
+                if ($att -match '^(.+?)\s+(\S+@\S+)$') {
+                    $item = New-Object System.Windows.Forms.ListViewItem($Matches[1].Trim())
+                    [void]$item.SubItems.Add($Matches[2].Trim())
+                    [void]$lvAttendees.Items.Add($item)
+                }
+            }
+        }
+        # Restore phone CSV if available
+        if ($PreviousData.PhoneCSV) {
+            $script:phoneCSVLoaded  = $PreviousData.PhoneCSV
+            $lblCsvStatus.Text      = "$($PreviousData.PhoneCSV.Count) phone(s) loaded from previous submission."
+            $lblCsvStatus.ForeColor = $clrGreen
+        }
+    }
+
     $btnSubmit.Add_Click({
         # -- Field validation --
         $valErrors = [System.Collections.Generic.List[string]]::new()
@@ -1832,6 +1887,32 @@ $btnSave.Add_Click({
 $btnSend.Add_Click({
     if (-not $script:checksRan) { return }
 
+    # Rate limiting — max submissions per session
+    if ($script:submissionCount -ge $MAX_SUBMISSIONS_PER_SESSION) {
+        [System.Windows.Forms.MessageBox]::Show(
+            "You have reached the maximum of $MAX_SUBMISSIONS_PER_SESSION submissions per session.`n`nPlease restart the application if you need to submit again, or use Save Report.",
+            "Submission Limit Reached",
+            [System.Windows.Forms.MessageBoxButtons]::OK,
+            [System.Windows.Forms.MessageBoxIcon]::Warning
+        ) | Out-Null
+        return
+    }
+
+    # Rate limiting — cooldown between submissions
+    if ($script:lastSubmissionTime) {
+        $elapsed = (Get-Date) - $script:lastSubmissionTime
+        $remaining = $SUBMISSION_COOLDOWN_SECONDS - $elapsed.TotalSeconds
+        if ($remaining -gt 0) {
+            [System.Windows.Forms.MessageBox]::Show(
+                "Please wait $([math]::Ceiling($remaining)) more seconds before submitting again.",
+                "Cooldown Active",
+                [System.Windows.Forms.MessageBoxButtons]::OK,
+                [System.Windows.Forms.MessageBoxIcon]::Information
+            ) | Out-Null
+            return
+        }
+    }
+
     # Guard — secret placeholder not replaced before signing
     if ($WEBHOOK_SECRET -eq 'REPLACE_WITH_YOUR_SECRET' -or $WEBHOOK_SECRET.Length -lt 32) {
         [System.Windows.Forms.MessageBox]::Show(
@@ -1961,6 +2042,12 @@ $btnSend.Add_Click({
             throw $msg
         }
 
+        # Track submission state (for rate limiting and Edit & Resend)
+        $script:lastOnboarding     = $onboarding
+        $script:submissionCount   += 1
+        $script:lastSubmissionTime = Get-Date
+        $btnEditResend.Visible     = $true
+
     } catch {
         $btnSend.Text    = 'Send to FieldPulse'
         $btnSend.Enabled = $true
@@ -1969,6 +2056,184 @@ $btnSend.Add_Click({
         [System.Windows.Forms.MessageBox]::Show(
             "Could not send the report automatically.`n`nPlease use Save Report and email the file to your FieldPulse contact.`n`nError: $_",
             "Send Failed",
+            [System.Windows.Forms.MessageBoxButtons]::OK,
+            [System.Windows.Forms.MessageBoxIcon]::Warning
+        ) | Out-Null
+    }
+})
+
+# -------------------------------------------------------------
+# EDIT & RESEND (re-open dialog with previous data)
+# -------------------------------------------------------------
+$btnEditResend.Add_Click({
+    if (-not $script:checksRan) { return }
+    if (-not $script:lastOnboarding) {
+        [System.Windows.Forms.MessageBox]::Show(
+            "No previous submission data available.",
+            "Cannot Edit",
+            [System.Windows.Forms.MessageBoxButtons]::OK,
+            [System.Windows.Forms.MessageBoxIcon]::Information
+        ) | Out-Null
+        return
+    }
+
+    # Rate limiting — max submissions per session
+    if ($script:submissionCount -ge $MAX_SUBMISSIONS_PER_SESSION) {
+        [System.Windows.Forms.MessageBox]::Show(
+            "You have reached the maximum of $MAX_SUBMISSIONS_PER_SESSION submissions per session.`n`nPlease restart the application if you need to submit again, or use Save Report.",
+            "Submission Limit Reached",
+            [System.Windows.Forms.MessageBoxButtons]::OK,
+            [System.Windows.Forms.MessageBoxIcon]::Warning
+        ) | Out-Null
+        return
+    }
+
+    # Rate limiting — cooldown between submissions
+    if ($script:lastSubmissionTime) {
+        $elapsed = (Get-Date) - $script:lastSubmissionTime
+        $remaining = $SUBMISSION_COOLDOWN_SECONDS - $elapsed.TotalSeconds
+        if ($remaining -gt 0) {
+            [System.Windows.Forms.MessageBox]::Show(
+                "Please wait $([math]::Ceiling($remaining)) more seconds before submitting again.",
+                "Cooldown Active",
+                [System.Windows.Forms.MessageBoxButtons]::OK,
+                [System.Windows.Forms.MessageBoxIcon]::Information
+            ) | Out-Null
+            return
+        }
+    }
+
+    # Show dialog pre-populated with previous data
+    $onboarding = Show-SubmissionDialog -PreviousData $script:lastOnboarding
+    if ($null -eq $onboarding) { return }   # user cancelled
+
+    # Sanitize customer name
+    $rawName      = $txtName.Text.Trim()
+    $customerName = if ($rawName) { $rawName -replace '[^\x20-\x7E]', '' } else { 'Unknown Customer' }
+
+    # Build counts
+    $passCount   = ($script:results | Where-Object { $_.Status -eq 'PASS' }).Count
+    $failCount   = ($script:results | Where-Object { $_.Status -eq 'FAIL' }).Count
+    $warnCount   = ($script:results | Where-Object { $_.Status -eq 'WARN' }).Count
+    $reportText  = Get-ReportText -Onboarding $onboarding
+    $reportHtml  = Get-ReportHtml -Onboarding $onboarding
+    $reportDate  = Get-Date -Format 'yyyy-MM-dd HH:mm'
+
+    # Build JSON payload (network results + onboarding info)
+    $payload = [ordered]@{
+        customer                  = $customerName
+        computer                  = $env:COMPUTERNAME
+        date                      = $reportDate
+        local_ip                  = $script:localIP
+        public_ip                 = $script:publicIP
+        gateway                   = $script:gateway
+        pass_count                = $passCount
+        fail_count                = $failCount
+        warn_count                = $warnCount
+        phone_count               = $onboarding.PhoneCount
+        phone_count_text          = $onboarding.PhoneCountText
+        phone_brand               = $onboarding.PhoneBrand
+        phone_models              = $onboarding.PhoneModels
+        config_type               = $onboarding.ConfigType
+        mac_serials               = $onboarding.MacSerials
+        config_notes              = $onboarding.ConfigNotes
+        preferred_time            = $onboarding.PreferredTime
+        attendees                 = $onboarding.Attendees
+        confirmed_former_provider = $onboarding.ConfirmedFormerProvider
+        confirmed_factory_reset   = $onboarding.ConfirmedFactoryReset
+        confirmed_firmware        = $onboarding.ConfirmedFirmware
+        phone_csv                 = if ($onboarding.PhoneCSV -and $onboarding.PhoneCSV.Count -gt 0) {
+                                        $onboarding.PhoneCSV | ConvertTo-Json -Compress
+                                    } else { '' }
+        report                    = $reportText
+        report_html               = $reportHtml
+    }
+    $jsonBody = $payload | ConvertTo-Json -Compress -Depth 3
+
+    # Compute HMAC-SHA256 signature
+    try {
+        $keyBytes = [System.Text.Encoding]::UTF8.GetBytes($WEBHOOK_SECRET)
+        $msgBytes = [System.Text.Encoding]::UTF8.GetBytes($jsonBody)
+        $hmac     = New-Object System.Security.Cryptography.HMACSHA256
+        $hmac.Key = $keyBytes
+        $sig      = [Convert]::ToBase64String($hmac.ComputeHash($msgBytes))
+        $hmac.Dispose()
+    } catch {
+        [System.Windows.Forms.MessageBox]::Show(
+            "Could not compute request signature.`n`nPlease use Save Report instead.`n`nError: $_",
+            "Signature Error",
+            [System.Windows.Forms.MessageBoxButtons]::OK,
+            [System.Windows.Forms.MessageBoxIcon]::Error
+        ) | Out-Null
+        return
+    }
+
+    $btnEditResend.Enabled = $false
+    $btnEditResend.Text    = 'Sending...'
+    Set-Status $lblStatus $progressBar 'Resending report to FieldPulse...' 100
+    [System.Windows.Forms.Application]::DoEvents()
+
+    try {
+        $uri      = "$WEBHOOK_URL`?sig=$([Uri]::EscapeDataString($sig))"
+        $response = Invoke-RestMethod `
+            -Uri         $uri `
+            -Method      POST `
+            -Body        $jsonBody `
+            -ContentType 'application/json' `
+            -TimeoutSec  $HTTP_REQUEST_TIMEOUT_S `
+            -ErrorAction Stop
+
+        if ($response.status -eq 'ok') {
+            $btnEditResend.Text      = 'Sent!'
+            $btnEditResend.BackColor = $clrGreen
+            Set-Status $lblStatus $progressBar 'Report resent to FieldPulse team successfully.' 100
+
+            [System.Windows.Forms.MessageBox]::Show(
+                "Your updated report has been sent to the FieldPulse team.",
+                "Report Sent!",
+                [System.Windows.Forms.MessageBoxButtons]::OK,
+                [System.Windows.Forms.MessageBoxIcon]::Information
+            ) | Out-Null
+        } elseif ($response.status -eq 'partial') {
+            $btnEditResend.Text      = 'Saved'
+            $btnEditResend.BackColor = $clrOrange
+            Set-Status $lblStatus $progressBar 'Report saved to Drive (email notification pending).' 100
+
+            [System.Windows.Forms.MessageBox]::Show(
+                "Your report was saved to FieldPulse's system, but the email notification failed to send.",
+                "Report Saved",
+                [System.Windows.Forms.MessageBoxButtons]::OK,
+                [System.Windows.Forms.MessageBoxIcon]::Warning
+            ) | Out-Null
+        } elseif ($response.status -eq 'duplicate') {
+            $btnEditResend.Text      = 'Already Sent'
+            $btnEditResend.BackColor = $clrGray
+            Set-Status $lblStatus $progressBar 'Report was already submitted.' 100
+
+            [System.Windows.Forms.MessageBox]::Show(
+                "This report was already submitted recently.`n`nPlease wait a few minutes before resending.",
+                "Already Submitted",
+                [System.Windows.Forms.MessageBoxButtons]::OK,
+                [System.Windows.Forms.MessageBoxIcon]::Information
+            ) | Out-Null
+        } else {
+            $msg = if ($response.message) { $response.message } else { 'Unexpected response from server.' }
+            throw $msg
+        }
+
+        # Update state
+        $script:lastOnboarding     = $onboarding
+        $script:submissionCount   += 1
+        $script:lastSubmissionTime = Get-Date
+
+    } catch {
+        $btnEditResend.Text    = 'Edit & Resend'
+        $btnEditResend.Enabled = $true
+        Set-Status $lblStatus $progressBar 'Resend failed  -  please try again or use Save Report.' 100
+
+        [System.Windows.Forms.MessageBox]::Show(
+            "Could not resend the report.`n`nError: $_",
+            "Resend Failed",
             [System.Windows.Forms.MessageBoxButtons]::OK,
             [System.Windows.Forms.MessageBoxIcon]::Warning
         ) | Out-Null
