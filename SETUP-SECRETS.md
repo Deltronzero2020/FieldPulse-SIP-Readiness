@@ -9,7 +9,7 @@ This guide explains how to configure the secrets required for automated builds.
 | Secret Name | Description | Example |
 |-------------|-------------|---------|
 | `WEBHOOK_URL` | Your Google Apps Script deployment URL | `https://script.google.com/macros/s/ABC123.../exec` |
-| `WEBHOOK_SECRET` | HMAC shared secret (UUID) | `b9998be9-a908-435e-a4a5-51ff793eb71b` |
+| `WEBHOOK_SECRET` | HMAC shared secret (UUID) | `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx` |
 
 ---
 
