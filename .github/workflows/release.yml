@@ -95,7 +95,7 @@ jobs:
         shell: pwsh
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           name: FieldPulse SIP Readiness ${{ github.ref_name }}
           body: |
