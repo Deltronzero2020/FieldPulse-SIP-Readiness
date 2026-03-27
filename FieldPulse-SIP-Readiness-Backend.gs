@@ -21,13 +21,15 @@
 // ─── CONFIGURE THESE VALUES ──────────────────────────────────
 // SECURITY: Move these to Script Properties for production deployments.
 // In Apps Script editor: Project Settings > Script Properties
-var NOTIFY_EMAIL    = 'cuahutemoc.orona@fieldpulse.com';
-var DRIVE_FOLDER_ID = '15VOUD3Nn7pR-_QzppiXeJKVlegB5n9tM';
+// PLACEHOLDER: Configure these in your own Apps Script deployment
+// These values are NOT injected by GitHub Actions - you must set them manually
+// in your Google Apps Script project after copying this file.
+var NOTIFY_EMAIL    = 'YOUR_EMAIL@example.com';
+var DRIVE_FOLDER_ID = 'YOUR_DRIVE_FOLDER_ID';
 
-// Shared HMAC secret — must match WEBHOOK_SECRET in the PowerShell script.
-// IMPORTANT: Generate a unique UUID for production. Never reuse across deployments.
-// This secret validates that submissions come from authorized clients.
-var WEBHOOK_SECRET  = 'b9998be9-a908-435e-a4a5-51ff793eb71b';
+// Shared HMAC secret — must match WEBHOOK_SECRET in the client apps.
+// IMPORTANT: Generate a unique UUID for production: https://www.uuidgenerator.net/
+var WEBHOOK_SECRET  = 'YOUR_WEBHOOK_SECRET_UUID';
 // ─────────────────────────────────────────────────────────────
 
 // ─── SIZE LIMITS ─────────────────────────────────────────────

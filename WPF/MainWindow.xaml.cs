@@ -18,8 +18,9 @@ public partial class MainWindow : Window
 {
     // ── Webhook config ─────────────────────────────────────────────
     // SECURITY: For production, consider loading from app.config or environment
-    private const string WebhookUrl    = "https://script.google.com/macros/s/AKfycbw2FBOh7t29k6WSQUqsQvmtAO_yJr7bnMs0i1IBYYp2ubX-jDNOQS4xuLDQv9wepWez/exec";
-    private const string WebhookSecret = "b9998be9-a908-435e-a4a5-51ff793eb71b";
+    // PLACEHOLDER: Replaced by GitHub Actions during build
+    private const string WebhookUrl    = "{{WEBHOOK_URL}}";
+    private const string WebhookSecret = "{{WEBHOOK_SECRET}}";
 
     // ── Timeouts & Limits ─────────────────────────────────────────
     private const int TcpProbeTimeoutMs   = 1500;   // Timeout for TCP connectivity probes

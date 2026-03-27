@@ -1,10 +1,14 @@
 # Builds and publishes a release when you push a version tag (e.g., v1.0.0)
 #
-# To create a release:
-#   git tag v1.0.0
-#   git push origin v1.0.0
+# SETUP REQUIRED:
+# 1. Go to GitHub repo → Settings → Secrets and variables → Actions
+# 2. Add these repository secrets:
+#    - WEBHOOK_URL: Your Google Apps Script deployment URL
+#    - WEBHOOK_SECRET: Your HMAC secret UUID (must match Apps Script)
 #
-# This will automatically build the EXE and create a GitHub Release with the deployment zip.
+# To create a release:
+#   git tag v1.0.1
+#   git push origin v1.0.1
 
 name: Build and Release
 
@@ -26,6 +30,26 @@ jobs:
         with:
           dotnet-version: '9.0.x'
 
+      - name: Inject secrets into WPF source
+        run: |
+          $file = "WPF/MainWindow.xaml.cs"
+          $content = Get-Content $file -Raw
+          $content = $content -replace '\{\{WEBHOOK_URL\}\}', '${{ secrets.WEBHOOK_URL }}'
+          $content = $content -replace '\{\{WEBHOOK_SECRET\}\}', '${{ secrets.WEBHOOK_SECRET }}'
+          Set-Content $file $content
+          Write-Host "Secrets injected into WPF source"
+        shell: pwsh
+
+      - name: Inject secrets into PowerShell script
+        run: |
+          $file = "FieldPulse-SIP-Readiness.ps1"
+          $content = Get-Content $file -Raw
+          $content = $content -replace '\{\{WEBHOOK_URL\}\}', '${{ secrets.WEBHOOK_URL }}'
+          $content = $content -replace '\{\{WEBHOOK_SECRET\}\}', '${{ secrets.WEBHOOK_SECRET }}'
+          Set-Content $file $content
+          Write-Host "Secrets injected into PowerShell script"
+        shell: pwsh
+
       - name: Build WPF Application
         run: |
           cd WPF
@@ -33,7 +57,6 @@ jobs:
 
       - name: Add documentation to Deploy folder
         run: |
-          Copy-Item README.txt Deploy/ -ErrorAction SilentlyContinue
           Copy-Item USER-GUIDE.md Deploy/
           Copy-Item IT-ADMIN-GUIDE.md Deploy/
         shell: pwsh
@@ -42,7 +65,7 @@ jobs:
         run: |
           @"
           ================================================================================
-            FIELDPULSE SIP READINESS CHECK
+            FIELDPULSE SIP READINESS CHECK  -  ${{ github.ref_name }}
             Quick Start Guide
           ================================================================================
 

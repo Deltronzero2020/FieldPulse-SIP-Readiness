@@ -35,3 +35,12 @@ error.log
 
 # Local config overrides
 appsettings.local.json
+
+# Local secrets (never commit)
+secrets.local.ps1
+secrets.local.json
+.env
+.env.local
+
+# Deployment output
+Deploy/
