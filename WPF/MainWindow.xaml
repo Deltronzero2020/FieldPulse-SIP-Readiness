@@ -228,16 +228,24 @@
                         AutomationProperties.Name="Close application"
                         AutomationProperties.HelpText="Exit the SIP Readiness Check application"/>
 
-                <!-- Spacer to push Help to right -->
-                <Border Width="1" Margin="20,0,0,0"/>
+                <!-- Spacer to push Help buttons to right -->
+                <Border Width="1" Margin="10,0,0,0"/>
 
-                <Button x:Name="btnHelp"
+                <Button x:Name="btnUserGuide"
                         Style="{StaticResource SecondaryButton}"
-                        Content="?   Help"
-                        Width="90"
-                        Click="BtnHelp_Click"
-                        AutomationProperties.Name="Open help documentation"
-                        AutomationProperties.HelpText="View the user guide and IT admin documentation"/>
+                        Content="?  User Guide"
+                        Width="110"
+                        Click="BtnUserGuide_Click"
+                        AutomationProperties.Name="Open user guide"
+                        AutomationProperties.HelpText="Step-by-step guide for running the readiness check"/>
+
+                <Button x:Name="btnITGuide"
+                        Style="{StaticResource SecondaryButton}"
+                        Content="?  IT Admin Guide"
+                        Width="130" Margin="8,0,0,0"
+                        Click="BtnITGuide_Click"
+                        AutomationProperties.Name="Open IT admin guide"
+                        AutomationProperties.HelpText="Firewall rules and network requirements for IT teams"/>
             </StackPanel>
         </Border>
 

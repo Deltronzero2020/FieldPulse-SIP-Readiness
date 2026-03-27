@@ -53,40 +53,44 @@ jobs:
           Write-Host "Secrets injected into PowerShell script"
         shell: pwsh
 
-      - name: Build WPF Application
-        run: |
-          cd WPF
-          dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o ../Deploy
-
       - name: Install wkhtmltopdf for PDF generation
         run: choco install wkhtmltopdf -y --no-progress
         shell: pwsh
 
-      - name: Convert documentation to PDF
+      - name: Generate PDFs and embed in WPF project
         run: |
           # Add wkhtmltopdf to PATH
           $env:PATH += ";C:\Program Files\wkhtmltopdf\bin"
 
-          # Convert USER-GUIDE.md to PDF
-          pandoc USER-GUIDE.md -o Deploy/USER-GUIDE.pdf `
+          # Create WPF/Docs folder for embedded resources
+          New-Item -ItemType Directory -Path "WPF/Docs" -Force
+
+          # Convert USER-GUIDE.md to PDF (embedded in EXE)
+          pandoc USER-GUIDE.md -o "WPF/Docs/USER-GUIDE.pdf" `
             --pdf-engine=wkhtmltopdf `
             --metadata title="FieldPulse SIP Readiness - User Guide" `
             -V margin-top=20mm -V margin-bottom=20mm -V margin-left=20mm -V margin-right=20mm
 
-          # Convert IT-ADMIN-GUIDE.md to PDF
-          pandoc IT-ADMIN-GUIDE.md -o Deploy/IT-ADMIN-GUIDE.pdf `
+          # Convert IT-ADMIN-GUIDE.md to PDF (embedded in EXE)
+          pandoc IT-ADMIN-GUIDE.md -o "WPF/Docs/IT-ADMIN-GUIDE.pdf" `
             --pdf-engine=wkhtmltopdf `
             --metadata title="FieldPulse SIP Readiness - IT Admin Guide" `
             -V margin-top=20mm -V margin-bottom=20mm -V margin-left=20mm -V margin-right=20mm
 
-          Write-Host "PDFs generated successfully"
-          Get-ChildItem Deploy/*.pdf
+          Write-Host "PDFs generated for embedding:"
+          Get-ChildItem WPF/Docs/*.pdf
         shell: pwsh
 
-      - name: Add markdown documentation to Deploy folder
+      - name: Build WPF Application (with embedded PDFs)
         run: |
-          Copy-Item USER-GUIDE.md Deploy/
-          Copy-Item IT-ADMIN-GUIDE.md Deploy/
+          cd WPF
+          dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o ../Deploy
+
+      - name: Copy PDFs to Deploy folder for separate download
+        run: |
+          Copy-Item "WPF/Docs/USER-GUIDE.pdf" Deploy/
+          Copy-Item "WPF/Docs/IT-ADMIN-GUIDE.pdf" Deploy/
+          Write-Host "PDFs copied to Deploy folder"
         shell: pwsh
 
       - name: Create README.txt for deployment
@@ -110,7 +114,7 @@ jobs:
           - USER-GUIDE.pdf       Full guide for end users (non-technical)
           - IT-ADMIN-GUIDE.pdf   Firewall and network requirements for IT teams
 
-          TIP: Click the "? Help" button in the app to access documentation online.
+          TIP: Click "User Guide" or "IT Admin Guide" buttons in the app to open docs.
 
           NEED HELP?
           ----------
@@ -147,8 +151,9 @@ jobs:
             - No administrator rights required
 
             ### What's New
-            - Added Help button in app to access documentation
-            - PDF documentation for easier reading
+            - **User Guide** and **IT Admin Guide** buttons open built-in PDF documentation
+            - PDFs are embedded in the EXE — no separate downloads needed
+            - PDFs also available as separate downloads above
           files: |
             Deploy/FieldPulse-SIP-Readiness.exe
             Deploy/USER-GUIDE.pdf

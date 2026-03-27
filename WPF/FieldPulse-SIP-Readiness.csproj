@@ -24,4 +24,10 @@
     <None Include="Assets\FP_Icon.ico" />
   </ItemGroup>
 
+  <!-- Embedded PDF documentation (generated during CI build) -->
+  <ItemGroup>
+    <EmbeddedResource Include="Docs\USER-GUIDE.pdf" Condition="Exists('Docs\USER-GUIDE.pdf')" />
+    <EmbeddedResource Include="Docs\IT-ADMIN-GUIDE.pdf" Condition="Exists('Docs\IT-ADMIN-GUIDE.pdf')" />
+  </ItemGroup>
+
 </Project>

@@ -705,22 +705,52 @@ public partial class MainWindow : Window
 
     private void BtnClose_Click(object sender, RoutedEventArgs e) => Close();
 
-    private void BtnHelp_Click(object sender, RoutedEventArgs e)
+    private void BtnUserGuide_Click(object sender, RoutedEventArgs e)
+        => OpenEmbeddedPdf("FieldPulseSIP.Docs.USER-GUIDE.pdf", "USER-GUIDE.pdf", "User Guide");
+
+    private void BtnITGuide_Click(object sender, RoutedEventArgs e)
+        => OpenEmbeddedPdf("FieldPulseSIP.Docs.IT-ADMIN-GUIDE.pdf", "IT-ADMIN-GUIDE.pdf", "IT Admin Guide");
+
+    private void OpenEmbeddedPdf(string resourceName, string fileName, string title)
     {
         try
         {
-            // Open online documentation (always up-to-date)
-            var psi = new System.Diagnostics.ProcessStartInfo
+            var assembly = System.Reflection.Assembly.GetExecutingAssembly();
+            using var stream = assembly.GetManifestResourceStream(resourceName);
+
+            if (stream == null)
             {
-                FileName = "https://github.com/Deltronzero2020/FieldPulse-SIP-Readiness/releases/latest",
+                // Fallback to online documentation if PDF not embedded
+                var psi = new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = "https://github.com/Deltronzero2020/FieldPulse-SIP-Readiness/releases/latest",
+                    UseShellExecute = true
+                };
+                System.Diagnostics.Process.Start(psi);
+                return;
+            }
+
+            // Extract to temp folder and open
+            string tempPath = Path.Combine(Path.GetTempPath(), "FieldPulse-SIP-Docs");
+            Directory.CreateDirectory(tempPath);
+            string filePath = Path.Combine(tempPath, fileName);
+
+            using (var fileStream = File.Create(filePath))
+            {
+                stream.CopyTo(fileStream);
+            }
+
+            var openPsi = new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = filePath,
                 UseShellExecute = true
             };
-            System.Diagnostics.Process.Start(psi);
+            System.Diagnostics.Process.Start(openPsi);
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"Could not open help documentation.\n\n{ex.Message}",
-                "Help", MessageBoxButton.OK, MessageBoxImage.Information);
+            MessageBox.Show($"Could not open {title}.\n\n{ex.Message}",
+                title, MessageBoxButton.OK, MessageBoxImage.Information);
         }
     }
 
