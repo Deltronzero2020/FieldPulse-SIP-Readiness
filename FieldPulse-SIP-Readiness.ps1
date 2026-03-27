@@ -391,6 +391,35 @@ $btnRun.Add_Click({
 
     Append-ResultBox $rtbResults '[i]' "Local IP" "$($script:localIP)   Gateway: $($script:gateway)   Public IP: $($script:publicIP)" 'INFO'
 
+    # -- Start latency tests in background (parallel with TCP checks) --
+    $latencyJobs = @()
+    $latencyTargets = @()
+    if ($script:gateway) {
+        $latencyTargets += @{ Target = $script:gateway; Label = 'Gateway' }
+    }
+    $latencyTargets += @{ Target = $SIP_IPS[0]; Label = 'FieldPulse SIP' }
+
+    foreach ($t in $latencyTargets) {
+        $job = Start-Job -ScriptBlock {
+            param($Target, $Label, $PingCount)
+            try {
+                $pings = Test-Connection -ComputerName $Target -Count $PingCount -ErrorAction SilentlyContinue
+                $rtts  = @($pings | Where-Object { $_ -and $_.ResponseTime -gt 0 } |
+                           ForEach-Object { $_.ResponseTime })
+                if ($rtts.Count -lt 3) {
+                    return @{ Label = $Label; Status = 'WARN'; Avg = $null; Jitter = $null; Lost = $PingCount - $rtts.Count; Error = 'Inconclusive' }
+                }
+                $avg    = [math]::Round(($rtts | Measure-Object -Average).Average, 1)
+                $jitter = ($rtts | Measure-Object -Maximum).Maximum - ($rtts | Measure-Object -Minimum).Minimum
+                $lost   = $PingCount - $rtts.Count
+                return @{ Label = $Label; Status = 'OK'; Avg = $avg; Jitter = $jitter; Lost = $lost; Error = $null }
+            } catch {
+                return @{ Label = $Label; Status = 'ERROR'; Avg = $null; Jitter = $null; Lost = $PingCount; Error = $_.Exception.Message }
+            }
+        } -ArgumentList $t.Target, $t.Label, $PING_COUNT
+        $latencyJobs += $job
+    }
+
     # -- CHECK 2  -  IP Connectivity -----------------------------
     Set-Status $lblStatus $progressBar 'Testing connectivity to FieldPulse IPs...' 15
     Write-Section "2. CONNECTIVITY TO FIELDPULSE IPs"
@@ -496,48 +525,47 @@ $btnRun.Add_Click({
         Append-ResultBox $rtbResults '[X]' "One or more IPs blocked" "Update your router/firewall  -  see checklist for IP list" 'FAIL'
     }
 
-    # -- CHECK 2b  -  Latency & Jitter ---------------------------
-    Set-Status $lblStatus $progressBar 'Testing network latency and jitter...' 52
+    # -- CHECK 2b  -  Latency & Jitter (collect parallel job results) --
+    Set-Status $lblStatus $progressBar 'Collecting latency and jitter results...' 52
     Write-Section "2b. LATENCY & JITTER"
 
-    # SIP thresholds: avg RTT <=100ms good, <=150ms marginal, >150ms fail
-    #                 jitter (max-min) <=20ms good, <=30ms marginal, >30ms fail
-    function Test-Latency {
-        param([string]$Target, [string]$Label)
-        try {
-            $pings = Test-Connection -ComputerName $Target -Count 5 -ErrorAction SilentlyContinue
-            $rtts  = @($pings | Where-Object { $_ -and $_.ResponseTime -gt 0 } |
-                       ForEach-Object { $_.ResponseTime })
-            if ($rtts.Count -lt 3) {
-                Append-ResultBox $rtbResults '[!]' "Latency inconclusive  -  $Label" "Fewer than 3 ICMP replies  -  firewall may block ping" 'WARN'
-                Add-ResultRow '[!]' "Latency ($Label)" "Inconclusive  -  ICMP may be blocked" 'WARN'
-                return
-            }
-            $avg    = [math]::Round(($rtts | Measure-Object -Average).Average, 1)
-            $jitter = ($rtts | Measure-Object -Maximum).Maximum -
-                      ($rtts | Measure-Object -Minimum).Minimum
-            $lost   = 5 - $rtts.Count
-            $detail = "Avg RTT: ${avg}ms   Jitter: ${jitter}ms   Packet loss: $lost/10"
+    # Wait for background latency jobs to complete (max 15 seconds)
+    $latencyJobs | Wait-Job -Timeout 15 | Out-Null
 
-            if ($avg -le $MAX_LATENCY_GOOD_MS -and $jitter -le $MAX_JITTER_GOOD_MS) {
-                Append-ResultBox $rtbResults '[OK]' "Latency good  -  $Label" $detail 'PASS'
-                Add-ResultRow '[OK]' "Latency $Label" $detail 'PASS'
-            } elseif ($avg -le $MAX_LATENCY_WARN_MS -and $jitter -le $MAX_JITTER_WARN_MS) {
-                Append-ResultBox $rtbResults '[!]' "Latency marginal  -  $Label" "$detail  -  may cause audio issues under load" 'WARN'
-                Add-ResultRow '[!]' "Latency $Label" "$detail  -  marginal for SIP" 'WARN'
-            } else {
-                Append-ResultBox $rtbResults '[X]' "Latency too high  -  $Label" "$detail  -  SIP calls will have audio problems" 'FAIL'
-                Add-ResultRow '[X]' "Latency $Label" "$detail  -  exceeds SIP thresholds" 'FAIL'
-            }
-            $script:reportLines.Add("Latency $Label : $detail")
-        } catch {
-            Append-ResultBox $rtbResults '[!]' "Latency test failed  -  $Label" "ICMP may be blocked by firewall or host" 'WARN'
-            Add-ResultRow '[!]' "Latency $Label" "Could not test  -  ICMP blocked" 'WARN'
+    foreach ($job in $latencyJobs) {
+        $result = Receive-Job -Job $job -ErrorAction SilentlyContinue
+        Remove-Job -Job $job -Force -ErrorAction SilentlyContinue
+
+        if (-not $result) {
+            Append-ResultBox $rtbResults '[!]' "Latency test timed out" "Test took too long  -  network may be congested" 'WARN'
+            Add-ResultRow '[!]' "Latency test" "Timed out" 'WARN'
+            continue
         }
-    }
 
-    if ($script:gateway) { Test-Latency $script:gateway 'Gateway' }
-    Test-Latency $SIP_IPS[0] 'FieldPulse SIP'
+        $label = $result.Label
+        if ($result.Status -eq 'ERROR' -or $result.Error -eq 'Inconclusive') {
+            Append-ResultBox $rtbResults '[!]' "Latency inconclusive  -  $label" "Fewer than 3 ICMP replies  -  firewall may block ping" 'WARN'
+            Add-ResultRow '[!]' "Latency ($label)" "Inconclusive  -  ICMP may be blocked" 'WARN'
+            continue
+        }
+
+        $avg    = $result.Avg
+        $jitter = $result.Jitter
+        $lost   = $result.Lost
+        $detail = "Avg RTT: ${avg}ms   Jitter: ${jitter}ms   Packet loss: $lost/$PING_COUNT"
+
+        if ($avg -le $MAX_LATENCY_GOOD_MS -and $jitter -le $MAX_JITTER_GOOD_MS) {
+            Append-ResultBox $rtbResults '[OK]' "Latency good  -  $label" $detail 'PASS'
+            Add-ResultRow '[OK]' "Latency $label" $detail 'PASS'
+        } elseif ($avg -le $MAX_LATENCY_WARN_MS -and $jitter -le $MAX_JITTER_WARN_MS) {
+            Append-ResultBox $rtbResults '[!]' "Latency marginal  -  $label" "$detail  -  may cause audio issues under load" 'WARN'
+            Add-ResultRow '[!]' "Latency $label" "$detail  -  marginal for SIP" 'WARN'
+        } else {
+            Append-ResultBox $rtbResults '[X]' "Latency too high  -  $label" "$detail  -  SIP calls will have audio problems" 'FAIL'
+            Add-ResultRow '[X]' "Latency $label" "$detail  -  exceeds SIP thresholds" 'FAIL'
+        }
+        $script:reportLines.Add("Latency $label : $detail")
+    }
 
     # -- CHECK 3  -  Router & Gateway Configuration --------------
     Set-Status $lblStatus $progressBar 'Detecting router and testing gateway configuration...' 55
