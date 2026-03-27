@@ -849,6 +849,214 @@ $("=" * 60)
 }
 
 # -------------------------------------------------------------
+# HTML REPORT BUILDER (for rich email reports)
+# -------------------------------------------------------------
+function Get-ReportHtml {
+    param([hashtable]$Onboarding = $null)
+
+    $customerName = if ($txtName.Text.Trim()) { $txtName.Text.Trim() } else { 'Unknown Customer' }
+    $passCount = ($script:results | Where-Object { $_.Status -eq 'PASS' }).Count
+    $warnCount = ($script:results | Where-Object { $_.Status -eq 'WARN' }).Count
+    $failCount = ($script:results | Where-Object { $_.Status -eq 'FAIL' }).Count
+
+    # Helper: HTML-escape
+    function HtmlEsc([string]$s) {
+        return [System.Net.WebUtility]::HtmlEncode($s)
+    }
+
+    # Helper: Status badge
+    function Badge([string]$status) {
+        switch ($status) {
+            'PASS' { $bg = '#DAFBE1'; $fg = '#1A7F37'; $lbl = '&#10003;&nbsp; PASS' }
+            'FAIL' { $bg = '#FFEBE9'; $fg = '#CF222E'; $lbl = '&#10007;&nbsp; FAIL' }
+            'WARN' { $bg = '#FFF8C5'; $fg = '#9A6700'; $lbl = '!&nbsp; WARN' }
+            'INFO' { $bg = '#DDF4FF'; $fg = '#0550AE'; $lbl = 'i&nbsp; INFO' }
+            default { $bg = '#F6F8FA'; $fg = '#57606A'; $lbl = '&middot;' }
+        }
+        return "<span style=`"background:$bg;color:$fg;padding:3px 10px;border-radius:10px;font-size:11px;font-weight:700;white-space:nowrap`">$lbl</span>"
+    }
+
+    # Helper: Yes/No dot
+    function Dot([bool]$v) {
+        if ($v) { return "<span style=`"color:#1A7F37;font-weight:700`">&#10003; Yes</span>" }
+        else    { return "<span style=`"color:#CF222E;font-weight:700`">&#10007; No</span>" }
+    }
+
+    $css = @"
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#F6F8FA;color:#1C2226;padding:24px}
+.wrap{max-width:860px;margin:0 auto}
+.header{background:#00034D;color:#fff;padding:28px 32px;border-radius:8px 8px 0 0}
+.header h1{font-size:20px;font-weight:700;margin-bottom:4px}
+.header p{font-size:12px;color:#8899CC;margin:0}
+.meta{background:#EAECF0;padding:10px 32px;font-size:12px;color:#57606A;border-bottom:1px solid #D0D7DE}
+.body{background:#fff;padding:24px 32px;border:1px solid #D0D7DE;border-top:none;border-radius:0 0 8px 8px}
+.section{margin:24px 0 10px;display:flex;align-items:center;gap:10px}
+.section-title{font-size:11px;font-weight:700;color:#00034D;text-transform:uppercase;letter-spacing:.8px;white-space:nowrap}
+.section-line{flex:1;height:1px;background:#D0D7DE}
+table{width:100%;border-collapse:collapse;margin-bottom:16px}
+td,th{padding:10px 12px;font-size:13px;vertical-align:top;border-bottom:1px solid #EAECF0}
+th{font-size:11px;font-weight:700;color:#57606A;text-align:left;background:#F6F8FA;border-bottom:2px solid #D0D7DE}
+tr:last-child td{border-bottom:none}
+.result-cat{font-weight:600;color:#1C2226}
+.result-detail{color:#57606A;font-size:12px;margin-top:3px}
+.accent{width:4px;border-radius:4px;padding:0 !important}
+.kv td:first-child{width:200px;font-weight:600;color:#57606A;font-size:12px}
+.kv td:last-child{font-size:13px}
+.summary{padding:14px 18px;border-radius:6px;margin-bottom:20px;font-weight:600}
+.inv th,.inv td{font-size:12px}
+@media print{body{padding:0}}
+"@
+
+    # Summary banner
+    if ($failCount -gt 0) {
+        $sumBg = '#FFEBE9'; $sumColor = '#CF222E'
+        $sumText = "&#10007; Action required &mdash; $failCount issue(s) must be resolved before SIP phones can register."
+    } elseif ($warnCount -gt 2) {
+        $sumBg = '#FFF8C5'; $sumColor = '#9A6700'
+        $sumText = '&#9888; Some warnings need attention before onboarding.'
+    } else {
+        $sumBg = '#DAFBE1'; $sumColor = '#1A7F37'
+        $sumText = '&#10003; Your environment looks ready!'
+    }
+
+    $sb = [System.Text.StringBuilder]::new()
+    [void]$sb.Append(@"
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>FieldPulse SIP Readiness Report &mdash; $(HtmlEsc $customerName)</title>
+<style>
+$css
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="header">
+    <h1>FieldPulse &mdash; SIP Readiness Report</h1>
+    <p>SIP Phone Registration Readiness Check &nbsp;&bull;&nbsp; v2.0</p>
+  </div>
+  <div class="meta">
+    Customer: <strong>$(HtmlEsc $customerName)</strong> &nbsp;&bull;&nbsp;
+    Computer: <strong>$(HtmlEsc $env:COMPUTERNAME)</strong> &nbsp;&bull;&nbsp;
+    User: <strong>$(HtmlEsc $env:USERNAME)</strong> &nbsp;&bull;&nbsp;
+    Date: <strong>$(Get-Date -Format 'yyyy-MM-dd HH:mm')</strong>
+  </div>
+  <div class="body">
+    <div class="summary" style="background:$sumBg;color:$sumColor;border:1px solid ${sumColor}40">
+      $sumText &nbsp; &mdash; &nbsp; $passCount PASS &nbsp; $warnCount WARN &nbsp; $failCount FAIL
+    </div>
+    <div class="section"><span class="section-title">Network Info</span><div class="section-line"></div></div>
+    <table class="kv">
+      <tr><td>Local IP</td><td>$(HtmlEsc $script:localIP)</td></tr>
+      <tr><td>Public IP</td><td>$(HtmlEsc $script:publicIP)</td></tr>
+      <tr><td>Gateway</td><td>$(HtmlEsc $script:gateway)</td></tr>
+    </table>
+"@)
+
+    # Check results - grouped by section
+    $currentSection = $null
+    foreach ($line in $script:reportLines) {
+        if ($line -match '^\n') {
+            # Section header
+            if ($currentSection) { [void]$sb.Append('</table>') }
+            $sectionTitle = $line.Trim()
+            $currentSection = $sectionTitle
+            [void]$sb.Append(@"
+    <div class="section"><span class="section-title">$(HtmlEsc $sectionTitle)</span><div class="section-line"></div></div>
+    <table>
+      <tr><th style="width:36%">Check</th><th>Detail</th><th style="width:100px;text-align:center">Result</th></tr>
+"@)
+        } elseif ($line -match '^\[([A-Z]{4})\]\s+(.+?)\s+-\s+(.+)$') {
+            $status = $matches[1]
+            $category = $matches[2].Trim()
+            $detail = $matches[3].Trim()
+            $accentColor = switch ($status) {
+                'PASS' { '#1A7F37' }
+                'FAIL' { '#CF222E' }
+                'WARN' { '#9A6700' }
+                default { '#0550AE' }
+            }
+            [void]$sb.Append(@"
+      <tr>
+        <td class="accent" style="background:$accentColor"></td>
+        <td><div class="result-cat">$(HtmlEsc $category)</div><div class="result-detail">$(HtmlEsc $detail)</div></td>
+        <td style="text-align:center">$(Badge $status)</td>
+      </tr>
+"@)
+        }
+    }
+    if ($currentSection) { [void]$sb.Append('</table>') }
+
+    # Onboarding section
+    if ($Onboarding) {
+        [void]$sb.Append(@"
+    <div class="section"><span class="section-title">Onboarding Information</span><div class="section-line"></div></div>
+    <table class="kv">
+      <tr><td>Phone count</td><td>$(HtmlEsc $Onboarding.PhoneCountText)</td></tr>
+      <tr><td>Phone brand</td><td>$(HtmlEsc $Onboarding.PhoneBrand)</td></tr>
+      <tr><td>Phone model(s)</td><td>$(HtmlEsc $Onboarding.PhoneModels)</td></tr>
+      <tr><td>Config type</td><td>$(HtmlEsc $Onboarding.ConfigType)</td></tr>
+      <tr><td>MAC / Serials</td><td>$(HtmlEsc $Onboarding.MacSerials)</td></tr>
+      <tr><td>Preferred time</td><td>$(HtmlEsc $Onboarding.PreferredTime)</td></tr>
+      <tr><td>Attendee(s)</td><td>$(HtmlEsc $Onboarding.Attendees)</td></tr>
+"@)
+        if ($Onboarding.ConfigNotes) {
+            [void]$sb.Append("<tr><td>Notes</td><td>$(HtmlEsc $Onboarding.ConfigNotes)</td></tr>")
+        }
+        [void]$sb.Append(@"
+    </table>
+    <div class="section"><span class="section-title">Customer Confirmations</span><div class="section-line"></div></div>
+    <table class="kv">
+      <tr><td>Former provider contacted</td><td>$(Dot $Onboarding.ConfirmedFormerProvider)</td></tr>
+      <tr><td>SIP phones factory reset</td><td>$(Dot $Onboarding.ConfirmedFactoryReset)</td></tr>
+      <tr><td>Firmware updated</td><td>$(Dot $Onboarding.ConfirmedFirmware)</td></tr>
+    </table>
+"@)
+
+        # Phone inventory table
+        if ($Onboarding.PhoneCSV -and $Onboarding.PhoneCSV.Count -gt 0) {
+            [void]$sb.Append(@"
+    <div class="section"><span class="section-title">Phone Inventory ($($Onboarding.PhoneCSV.Count) phones)</span><div class="section-line"></div></div>
+    <table class="inv">
+      <tr><th>#</th><th>Brand</th><th>Model</th><th>MAC Address</th><th>Serial</th><th>Ext</th><th>Label</th></tr>
+"@)
+            $n = 1
+            foreach ($ph in $Onboarding.PhoneCSV) {
+                [void]$sb.Append("<tr><td>$n</td><td>$(HtmlEsc $ph.Brand)</td><td>$(HtmlEsc $ph.PhoneModel)</td><td><code>$(HtmlEsc $ph.MACAddress)</code></td><td>$(HtmlEsc $ph.SerialNumber)</td><td>$(HtmlEsc $ph.Extension)</td><td>$(HtmlEsc $ph.LineLabel)</td></tr>")
+                $n++
+            }
+            [void]$sb.Append('</table>')
+        }
+    } else {
+        [void]$sb.Append(@"
+    <div class="section"><span class="section-title">Manual Actions Still Required</span><div class="section-line"></div></div>
+    <ul style="margin:0 0 16px 20px;font-size:13px;line-height:2">
+      <li>Disable SIP ALG in router (SIP Helper / VoIP ALG)</li>
+      <li>Contact former phone system provider to release devices</li>
+      <li>Factory reset SIP phones before FieldPulse configuration</li>
+      <li>Update SIP phone firmware to latest stable version</li>
+    </ul>
+"@)
+    }
+
+    [void]$sb.Append(@"
+    <p style="font-size:11px;color:#8C959F;margin-top:24px;border-top:1px solid #EAECF0;padding-top:12px">
+      Generated by FieldPulse SIP Readiness Check v2.0 &nbsp;&bull;&nbsp; $(Get-Date -Format 'yyyy-MM-dd HH:mm')
+    </p>
+  </div>
+</div>
+</body>
+</html>
+"@)
+
+    return $sb.ToString()
+}
+
+# -------------------------------------------------------------
 # PHONE CSV VALIDATION
 # -------------------------------------------------------------
 function Invoke-PhoneCSVValidation {
@@ -1242,7 +1450,7 @@ function Show-SubmissionDialog {
     $cboTime.Size         = New-Object System.Drawing.Size(176, 24)
     $cboTime.Font         = $fontMeta
     $cboTime.DropDownStyle = 'DropDown'
-    @('ASAP','Mon-Fri  9:00am - 12:00pm CT', 'Mon-Fri  1:00pm - 3:00pm CT', 'Mon-Fri  3:00pm - 6:00pm CT') |
+    @('ASAP','Mon-Fri  9:00 AM - 11:45 AM CT', 'Mon-Fri  1:00 PM - 3:00 PM CT', 'Mon-Fri  3:00 PM - 5:00 PM CT') |
         ForEach-Object { [void]$cboTime.Items.Add($_) }
     $cboTime.SelectedIndex = 0
     $dlg.Controls.Add($cboTime)
@@ -1620,6 +1828,7 @@ $btnSend.Add_Click({
     $failCount   = ($script:results | Where-Object { $_.Status -eq 'FAIL' }).Count
     $warnCount   = ($script:results | Where-Object { $_.Status -eq 'WARN' }).Count
     $reportText  = Get-ReportText -Onboarding $onboarding
+    $reportHtml  = Get-ReportHtml -Onboarding $onboarding
     $reportDate  = Get-Date -Format 'yyyy-MM-dd HH:mm'
 
     # Build JSON payload (network results + onboarding info)
@@ -1649,6 +1858,7 @@ $btnSend.Add_Click({
                                         $onboarding.PhoneCSV | ConvertTo-Json -Compress
                                     } else { '' }
         report                    = $reportText
+        report_html               = $reportHtml
     }
     $jsonBody = $payload | ConvertTo-Json -Compress -Depth 3
 

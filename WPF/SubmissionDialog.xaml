@@ -302,10 +302,9 @@
                                   Style="{StaticResource FlatComboBox}"
                                   IsEditable="True" Text="">
                             <ComboBoxItem>ASAP</ComboBoxItem>
-                            <ComboBoxItem>Weekday mornings (9 AM – 12 PM)</ComboBoxItem>
-                            <ComboBoxItem>Weekday afternoons (12 PM – 5 PM)</ComboBoxItem>
-                            <ComboBoxItem>Weekday evenings (5 PM – 8 PM)</ComboBoxItem>
-                            <ComboBoxItem>Weekend mornings</ComboBoxItem>
+                            <ComboBoxItem>Mon–Fri  9:00 AM – 11:45 AM CT</ComboBoxItem>
+                            <ComboBoxItem>Mon–Fri  1:00 PM – 3:00 PM CT</ComboBoxItem>
+                            <ComboBoxItem>Mon–Fri  3:00 PM – 5:00 PM CT</ComboBoxItem>
                         </ComboBox>
                         <TextBlock x:Name="errPreferredTime" Foreground="#CF222E" FontSize="11"
                                    Margin="0,2,0,0" Visibility="Collapsed"/>
