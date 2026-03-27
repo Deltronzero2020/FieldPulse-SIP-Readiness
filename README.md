@@ -11,17 +11,31 @@ A Windows diagnostic tool for verifying network readiness before SIP phone onboa
 - **Secure Submission** - HMAC-SHA256 signed reports sent via HTTPS to Google Apps Script backend
 - **Onboarding Data Collection** - Phone inventory, attendee contacts, and customer confirmations
 
-## Components
+## Repository Structure
 
-| Component | Description |
-|-----------|-------------|
-| `WPF/` | .NET 9 WPF desktop application (recommended) |
-| `FieldPulse-SIP-Readiness.ps1` | PowerShell GUI application (alternative) |
-| `FieldPulse-SIP-Readiness-Backend.gs` | Google Apps Script webhook receiver |
-| `Build-Deployment.ps1` | Creates clean deployment folder |
-| `USER-GUIDE.md` | Non-technical guide for end users |
-| `IT-ADMIN-GUIDE.md` | Firewall/AV guide for IT administrators |
-| `Sign-Script.ps1` | Code signing utility |
+```
+FieldPulse-SIP-Readiness/
+  FieldPulse-SIP-Readiness.sln    Solution file (open in Visual Studio / Rider)
+  src/                             .NET 9 WPF desktop application
+    FieldPulse-SIP-Readiness.csproj
+    MainWindow.xaml / .xaml.cs
+    SubmissionDialog.xaml / .xaml.cs
+    App.xaml / .xaml.cs
+    Converters.cs
+    Styles.xaml
+    Assets/                        Icons and logos
+  docs/                            End-user and admin documentation
+    USER-GUIDE.md
+    IT-ADMIN-GUIDE.md
+    SETUP-SECRETS.md
+    SECURITY-REVIEW-SUMMARY.md
+  scripts/                         Build and signing scripts
+    Build-Deployment.ps1
+    Sign-Script.ps1
+  backend/                         Google Apps Script webhook receiver
+    FieldPulse-SIP-Readiness-Backend.gs
+  archive/                         Legacy PS1/BAT versions (kept for reference)
+```
 
 ## Customer Deployment
 
@@ -29,10 +43,10 @@ A Windows diagnostic tool for verifying network readiness before SIP phone onboa
 
 ```powershell
 # Run from the repo root (on Windows with .NET SDK installed)
-.\Build-Deployment.ps1
+.\scripts\Build-Deployment.ps1
 
 # With code signing (eliminates SmartScreen warning)
-.\Build-Deployment.ps1 -SignCert "YOUR_CERT_THUMBPRINT"
+.\scripts\Build-Deployment.ps1 -SignCert "YOUR_CERT_THUMBPRINT"
 ```
 
 This creates a `Deploy/` folder containing:
@@ -55,9 +69,9 @@ Deploy/
 
 1. Extract the zip (or run from network share)
 2. Double-click `FieldPulse-SIP-Readiness.exe`
-3. If SmartScreen appears: click "More info" → "Run anyway"
-4. Enter company name → Click "Run Checks"
-5. Review results → Click "Send to FieldPulse"
+3. If SmartScreen appears: click "More info" -> "Run anyway"
+4. Enter company name -> Click "Run Checks"
+5. Review results -> Click "Send to FieldPulse"
 
 ---
 
@@ -66,36 +80,28 @@ Deploy/
 ### Quick Start (Development)
 
 ```powershell
-# Run the WPF app directly
-cd WPF
+# Open solution in Visual Studio
+start FieldPulse-SIP-Readiness.sln
+
+# Or run the WPF app directly
+cd src
 dotnet run
 
-# Or run the PowerShell version
-.\FieldPulse-SIP-Readiness.ps1
-```
-
-### Build Commands
-
-```powershell
-# WPF - Debug build
-cd WPF
-dotnet build
-
-# WPF - Release build (single-file EXE)
+# Release build (single-file EXE)
 dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true
 ```
 
 ## Backend Setup
 
 1. Go to [script.google.com](https://script.google.com) > New project
-2. Paste contents of `FieldPulse-SIP-Readiness-Backend.gs`
+2. Paste contents of `backend/FieldPulse-SIP-Readiness-Backend.gs`
 3. Configure `NOTIFY_EMAIL`, `DRIVE_FOLDER_ID`, `WEBHOOK_SECRET`
 4. Deploy > New deployment > Web app
 5. Copy Web app URL to client configuration
 
 ## Configuration
 
-### Client (PS1/WPF)
+### Client (WPF)
 ```powershell
 $WEBHOOK_URL    = "https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec"
 $WEBHOOK_SECRET = "your-shared-secret-uuid"
@@ -120,7 +126,7 @@ The tool tests connectivity to:
 
 ## IT Administrator Notes
 
-For enterprise deployments, see **[IT-ADMIN-GUIDE.md](IT-ADMIN-GUIDE.md)** which covers:
+For enterprise deployments, see **[docs/IT-ADMIN-GUIDE.md](docs/IT-ADMIN-GUIDE.md)** which covers:
 
 - Firewall rules for FieldPulse IPs
 - Antivirus exclusion recommendations
@@ -147,7 +153,7 @@ For enterprise deployments, see **[IT-ADMIN-GUIDE.md](IT-ADMIN-GUIDE.md)** which
 - Request deduplication (5-minute window)
 - Constant-time HMAC comparison
 
-See [SECURITY-REVIEW-SUMMARY.md](SECURITY-REVIEW-SUMMARY.md) for full security audit.
+See [docs/SECURITY-REVIEW-SUMMARY.md](docs/SECURITY-REVIEW-SUMMARY.md) for full security audit.
 
 ---
 

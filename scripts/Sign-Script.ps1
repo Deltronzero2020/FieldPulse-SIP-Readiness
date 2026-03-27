@@ -44,11 +44,12 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
-$ScriptPath = Join-Path $PSScriptRoot 'FieldPulse-SIP-Readiness.ps1'
-$ExePath    = Join-Path $PSScriptRoot 'FieldPulse-SIP-Readiness.exe'
+$RepoRoot   = Split-Path -Parent $PSScriptRoot
+$ScriptPath = Join-Path $RepoRoot 'archive\FieldPulse-SIP-Readiness.ps1'
+$ExePath    = Join-Path $RepoRoot 'FieldPulse-SIP-Readiness.exe'
 
 if (-not (Test-Path $ScriptPath)) {
-    Write-Error "FieldPulse-SIP-Readiness.ps1 not found in $PSScriptRoot"
+    Write-Error "FieldPulse-SIP-Readiness.ps1 not found in archive/ — this script signs the legacy PS1 version"
     exit 1
 }
 

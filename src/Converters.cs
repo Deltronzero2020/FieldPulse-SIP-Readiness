@@ -100,6 +100,7 @@ public class PhoneEntry
     public string MACAddress   { get; set; } = "";
     public string SerialNumber { get; set; } = "";
     public string Extension    { get; set; } = "";
+    public string DisplayName  { get; set; } = "";
     public string LineLabel    { get; set; } = "";
 }
 
@@ -125,6 +126,13 @@ public class OnboardingData
     public bool   ConfirmedFactoryReset   { get; set; }
     public bool   ConfirmedFirmware       { get; set; }
     public List<PhoneEntry>? PhoneCSV     { get; set; }
+
+    // SIP Configuration
+    public string SipServer      { get; set; } = "";
+    public string SipPort        { get; set; } = "5060";
+    public string SipTransport   { get; set; } = "UDP";
+    public string OutboundProxy  { get; set; } = "";
+    public string VoicemailExt   { get; set; } = "";
 }
 
 public class CsvValidationResult

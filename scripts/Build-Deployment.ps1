@@ -5,20 +5,21 @@
 .DESCRIPTION
     Compiles the WPF application and creates a deployment-ready folder
     containing only the files needed for customer distribution.
+    Run from any directory — the script resolves the repo root automatically.
 
 .PARAMETER OutputPath
-    Path where the deployment folder will be created.
+    Path where the deployment folder will be created (relative to repo root).
     Default: .\Deploy
 
 .PARAMETER SignCert
     Optional certificate thumbprint for code signing.
 
 .EXAMPLE
-    .\Build-Deployment.ps1
+    .\scripts\Build-Deployment.ps1
     # Creates .\Deploy folder with unsigned EXE
 
 .EXAMPLE
-    .\Build-Deployment.ps1 -SignCert "ABC123..."
+    .\scripts\Build-Deployment.ps1 -SignCert "ABC123..."
     # Creates signed deployment
 #>
 
@@ -29,23 +30,27 @@ param(
 
 $ErrorActionPreference = "Stop"
 
+# Resolve repo root (one level up from scripts/)
+$RepoRoot = Split-Path -Parent $PSScriptRoot
+
 Write-Host "`n========================================" -ForegroundColor Cyan
 Write-Host "  FieldPulse SIP Readiness - Build" -ForegroundColor Cyan
 Write-Host "========================================`n" -ForegroundColor Cyan
 
 # Step 1: Clean output folder
-if (Test-Path $OutputPath) {
+$OutputFull = Join-Path $RepoRoot $OutputPath
+if (Test-Path $OutputFull) {
     Write-Host "[1/6] Cleaning existing deployment folder..." -ForegroundColor Yellow
-    Remove-Item -Path $OutputPath -Recurse -Force
+    Remove-Item -Path $OutputFull -Recurse -Force
 }
-New-Item -Path $OutputPath -ItemType Directory -Force | Out-Null
-Write-Host "[1/6] Created deployment folder: $OutputPath" -ForegroundColor Green
+New-Item -Path $OutputFull -ItemType Directory -Force | Out-Null
+Write-Host "[1/6] Created deployment folder: $OutputFull" -ForegroundColor Green
 
 # Step 2: Build the WPF application
 Write-Host "[2/6] Building WPF application (Release, self-contained)..." -ForegroundColor Yellow
-Push-Location ".\WPF"
+Push-Location (Join-Path $RepoRoot "src")
 try {
-    dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o "..\$OutputPath" 2>&1 | Out-Null
+    dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o $OutputFull 2>&1 | Out-Null
     if ($LASTEXITCODE -ne 0) {
         throw "dotnet publish failed with exit code $LASTEXITCODE"
     }
@@ -55,7 +60,7 @@ try {
 }
 
 # Step 3: Code sign (optional)
-$exePath = Join-Path $OutputPath "FieldPulse-SIP-Readiness.exe"
+$exePath = Join-Path $OutputFull "FieldPulse-SIP-Readiness.exe"
 if ($SignCert) {
     Write-Host "[3/6] Signing executable with certificate $SignCert..." -ForegroundColor Yellow
     try {
@@ -122,25 +127,25 @@ For IT administrators, see IT-ADMIN-GUIDE.md for firewall and AV details.
 
 ================================================================================
 "@
-$readmeContent | Out-File -FilePath (Join-Path $OutputPath "README.txt") -Encoding UTF8
+$readmeContent | Out-File -FilePath (Join-Path $OutputFull "README.txt") -Encoding UTF8
 Write-Host "[4/6] README.txt created." -ForegroundColor Green
 
 # Step 5: Copy documentation
 Write-Host "[5/6] Copying User Guide..." -ForegroundColor Yellow
-Copy-Item -Path ".\USER-GUIDE.md" -Destination (Join-Path $OutputPath "USER-GUIDE.md") -Force
+Copy-Item -Path (Join-Path $RepoRoot "docs\USER-GUIDE.md") -Destination (Join-Path $OutputFull "USER-GUIDE.md") -Force
 Write-Host "[5/6] USER-GUIDE.md copied." -ForegroundColor Green
 
 Write-Host "[6/6] Copying IT Admin Guide..." -ForegroundColor Yellow
-Copy-Item -Path ".\IT-ADMIN-GUIDE.md" -Destination $OutputPath -Force
+Copy-Item -Path (Join-Path $RepoRoot "docs\IT-ADMIN-GUIDE.md") -Destination $OutputFull -Force
 Write-Host "[6/6] IT-ADMIN-GUIDE.md copied." -ForegroundColor Green
 
 # Summary
 Write-Host "`n========================================" -ForegroundColor Cyan
 Write-Host "  BUILD COMPLETE" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
-Write-Host "`nDeployment folder: $((Resolve-Path $OutputPath).Path)" -ForegroundColor White
+Write-Host "`nDeployment folder: $((Resolve-Path $OutputFull).Path)" -ForegroundColor White
 Write-Host "`nContents:" -ForegroundColor White
-Get-ChildItem -Path $OutputPath | ForEach-Object {
+Get-ChildItem -Path $OutputFull | ForEach-Object {
     $size = if ($_.Length -gt 1MB) { "{0:N1} MB" -f ($_.Length / 1MB) } else { "{0:N0} KB" -f ($_.Length / 1KB) }
     Write-Host ("  {0,-40} {1,10}" -f $_.Name, $size)
 }

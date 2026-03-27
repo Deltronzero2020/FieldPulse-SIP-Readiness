@@ -66,17 +66,21 @@
 
         <!-- ── Company name input ──────────────────────────────── -->
         <Border Grid.Row="3" Background="White" Padding="28,0">
-            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                <TextBlock Text="Your company name:"
+            <Grid VerticalAlignment="Center">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*" MaxWidth="500"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0" Text="Your company name:"
                            Style="{StaticResource FieldLabel}"
                            Width="148"
                            AutomationProperties.Name="Company name label"/>
-                <TextBox x:Name="txtCompanyName"
+                <TextBox Grid.Column="1" x:Name="txtCompanyName"
                          Style="{StaticResource FlatTextBox}"
-                         Width="340" MaxLength="100"
+                         MaxLength="100"
                          AutomationProperties.Name="Company name"
                          AutomationProperties.HelpText="Enter your company name for the readiness report"/>
-            </StackPanel>
+            </Grid>
         </Border>
 
         <!-- Separator -->
@@ -192,61 +196,60 @@
 
         <!-- ── Button row ───────────────────────────────────────── -->
         <Border Grid.Row="9" Background="White" Padding="24,12">
-            <StackPanel Orientation="Horizontal">
+            <DockPanel LastChildFill="False">
+                <!-- Primary actions — left -->
+                <StackPanel DockPanel.Dock="Left" Orientation="Horizontal">
+                    <Button x:Name="btnRun"
+                            Style="{StaticResource PrimaryButton}"
+                            Content="▶   Run Checks"
+                            Width="150"
+                            Click="BtnRun_Click"
+                            AutomationProperties.Name="Run network checks"
+                            AutomationProperties.HelpText="Execute all network diagnostics to verify SIP phone readiness"/>
 
-                <Button x:Name="btnRun"
-                        Style="{StaticResource PrimaryButton}"
-                        Content="▶   Run Checks"
-                        Width="150"
-                        Click="BtnRun_Click"
-                        AutomationProperties.Name="Run network checks"
-                        AutomationProperties.HelpText="Execute all network diagnostics to verify SIP phone readiness"/>
+                    <Button x:Name="btnSend"
+                            Style="{StaticResource PrimaryButton}"
+                            Content="✉   Send to FieldPulse"
+                            Width="190" Margin="10,0,0,0"
+                            IsEnabled="False"
+                            Click="BtnSend_Click"
+                            AutomationProperties.Name="Send report to FieldPulse"
+                            AutomationProperties.HelpText="Submit the readiness report securely to the FieldPulse team"/>
 
-                <Button x:Name="btnSend"
-                        Style="{StaticResource PrimaryButton}"
-                        Content="✉   Send to FieldPulse"
-                        Width="190" Margin="10,0,0,0"
-                        IsEnabled="False"
-                        Click="BtnSend_Click"
-                        AutomationProperties.Name="Send report to FieldPulse"
-                        AutomationProperties.HelpText="Submit the readiness report securely to the FieldPulse team"/>
+                    <Button x:Name="btnSave"
+                            Style="{StaticResource SecondaryButton}"
+                            Content="⬇   Save Report"
+                            Width="150" Margin="10,0,0,0"
+                            IsEnabled="False"
+                            Click="BtnSave_Click"
+                            AutomationProperties.Name="Save report to desktop"
+                            AutomationProperties.HelpText="Save the readiness report as an HTML file to your desktop"/>
+                </StackPanel>
 
-                <Button x:Name="btnSave"
-                        Style="{StaticResource SecondaryButton}"
-                        Content="⬇   Save Report"
-                        Width="150" Margin="10,0,0,0"
-                        IsEnabled="False"
-                        Click="BtnSave_Click"
-                        AutomationProperties.Name="Save report to desktop"
-                        AutomationProperties.HelpText="Save the readiness report as an HTML file to your desktop"/>
+                <!-- Utility actions — right -->
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                    <Button x:Name="btnUserGuide"
+                            Style="{StaticResource SecondaryButton}"
+                            Content="?  User Guide"
+                            Width="110"
+                            Click="BtnUserGuide_Click"
+                            AutomationProperties.Name="Open user guide"/>
 
-                <Button x:Name="btnClose"
-                        Style="{StaticResource SecondaryButton}"
-                        Content="Close"
-                        Width="90" Margin="10,0,0,0"
-                        Click="BtnClose_Click"
-                        AutomationProperties.Name="Close application"
-                        AutomationProperties.HelpText="Exit the SIP Readiness Check application"/>
+                    <Button x:Name="btnITGuide"
+                            Style="{StaticResource SecondaryButton}"
+                            Content="?  IT Admin Guide"
+                            Width="130" Margin="8,0,0,0"
+                            Click="BtnITGuide_Click"
+                            AutomationProperties.Name="Open IT admin guide"/>
 
-                <!-- Spacer to push Help buttons to right -->
-                <Border Width="1" Margin="10,0,0,0"/>
-
-                <Button x:Name="btnUserGuide"
-                        Style="{StaticResource SecondaryButton}"
-                        Content="?  User Guide"
-                        Width="110"
-                        Click="BtnUserGuide_Click"
-                        AutomationProperties.Name="Open user guide"
-                        AutomationProperties.HelpText="Step-by-step guide for running the readiness check"/>
-
-                <Button x:Name="btnITGuide"
-                        Style="{StaticResource SecondaryButton}"
-                        Content="?  IT Admin Guide"
-                        Width="130" Margin="8,0,0,0"
-                        Click="BtnITGuide_Click"
-                        AutomationProperties.Name="Open IT admin guide"
-                        AutomationProperties.HelpText="Firewall rules and network requirements for IT teams"/>
-            </StackPanel>
+                    <Button x:Name="btnClose"
+                            Style="{StaticResource SecondaryButton}"
+                            Content="Close"
+                            Width="80" Margin="8,0,0,0"
+                            Click="BtnClose_Click"
+                            AutomationProperties.Name="Close application"/>
+                </StackPanel>
+            </DockPanel>
         </Border>
 
     </Grid>

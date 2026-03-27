@@ -35,22 +35,12 @@ jobs:
 
       - name: Inject secrets into WPF source
         run: |
-          $file = "WPF/MainWindow.xaml.cs"
+          $file = "src/MainWindow.xaml.cs"
           $content = Get-Content $file -Raw
           $content = $content -replace '\{\{WEBHOOK_URL\}\}', '${{ secrets.WEBHOOK_URL }}'
           $content = $content -replace '\{\{WEBHOOK_SECRET\}\}', '${{ secrets.WEBHOOK_SECRET }}'
           Set-Content $file $content
           Write-Host "Secrets injected into WPF source"
-        shell: pwsh
-
-      - name: Inject secrets into PowerShell script
-        run: |
-          $file = "FieldPulse-SIP-Readiness.ps1"
-          $content = Get-Content $file -Raw
-          $content = $content -replace '\{\{WEBHOOK_URL\}\}', '${{ secrets.WEBHOOK_URL }}'
-          $content = $content -replace '\{\{WEBHOOK_SECRET\}\}', '${{ secrets.WEBHOOK_SECRET }}'
-          Set-Content $file $content
-          Write-Host "Secrets injected into PowerShell script"
         shell: pwsh
 
       - name: Install pandoc and wkhtmltopdf for PDF generation
@@ -63,34 +53,34 @@ jobs:
           $env:PATH = [System.Environment]::GetEnvironmentVariable("PATH", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("PATH", "User")
           $env:PATH += ";C:\Program Files\wkhtmltopdf\bin;C:\Program Files\Pandoc"
 
-          # Create WPF/Docs folder for embedded resources
-          New-Item -ItemType Directory -Path "WPF/Docs" -Force
+          # Create src/Docs folder for embedded resources
+          New-Item -ItemType Directory -Path "src/Docs" -Force
 
           # Convert USER-GUIDE.md to PDF (embedded in EXE)
-          & "C:\Program Files\Pandoc\pandoc.exe" USER-GUIDE.md -o "WPF/Docs/USER-GUIDE.pdf" `
+          & "C:\Program Files\Pandoc\pandoc.exe" docs/USER-GUIDE.md -o "src/Docs/USER-GUIDE.pdf" `
             --pdf-engine=wkhtmltopdf `
             --metadata title="FieldPulse SIP Readiness - User Guide" `
             -V margin-top=20mm -V margin-bottom=20mm -V margin-left=20mm -V margin-right=20mm
 
           # Convert IT-ADMIN-GUIDE.md to PDF (embedded in EXE)
-          & "C:\Program Files\Pandoc\pandoc.exe" IT-ADMIN-GUIDE.md -o "WPF/Docs/IT-ADMIN-GUIDE.pdf" `
+          & "C:\Program Files\Pandoc\pandoc.exe" docs/IT-ADMIN-GUIDE.md -o "src/Docs/IT-ADMIN-GUIDE.pdf" `
             --pdf-engine=wkhtmltopdf `
             --metadata title="FieldPulse SIP Readiness - IT Admin Guide" `
             -V margin-top=20mm -V margin-bottom=20mm -V margin-left=20mm -V margin-right=20mm
 
           Write-Host "PDFs generated for embedding:"
-          Get-ChildItem WPF/Docs/*.pdf
+          Get-ChildItem src/Docs/*.pdf
         shell: pwsh
 
       - name: Build WPF Application (with embedded PDFs)
         run: |
-          cd WPF
+          cd src
           dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o ../Deploy
 
       - name: Copy PDFs to Deploy folder for separate download
         run: |
-          Copy-Item "WPF/Docs/USER-GUIDE.pdf" Deploy/
-          Copy-Item "WPF/Docs/IT-ADMIN-GUIDE.pdf" Deploy/
+          Copy-Item "src/Docs/USER-GUIDE.pdf" Deploy/
+          Copy-Item "src/Docs/IT-ADMIN-GUIDE.pdf" Deploy/
           Write-Host "PDFs copied to Deploy folder"
         shell: pwsh
 
