@@ -597,11 +597,6 @@ public partial class MainWindow : Window
                                               : "",
             ["csv_base64"]                = csvBase64,
             ["csv_filename"]              = csvFilename,
-            ["sip_server"]                = onboarding.SipServer,
-            ["sip_port"]                  = onboarding.SipPort,
-            ["sip_transport"]             = onboarding.SipTransport,
-            ["outbound_proxy"]            = onboarding.OutboundProxy,
-            ["voicemail_ext"]             = onboarding.VoicemailExt,
             ["report"]                    = reportText,
             ["report_html"]               = reportHtml,
         };
@@ -797,13 +792,6 @@ public partial class MainWindow : Window
             sb.AppendLine($"  Preferred time : {onboarding.PreferredTime}");
             sb.AppendLine($"  Attendee(s)    : {onboarding.Attendees}");
             sb.AppendLine(sub);
-            sb.AppendLine("  SIP CONFIGURATION");
-            sb.AppendLine($"  SIP Server     : {onboarding.SipServer}");
-            sb.AppendLine($"  SIP Port       : {onboarding.SipPort}");
-            sb.AppendLine($"  Transport      : {onboarding.SipTransport}");
-            sb.AppendLine($"  Outbound Proxy : {onboarding.OutboundProxy}");
-            sb.AppendLine($"  Voicemail Ext  : {onboarding.VoicemailExt}");
-            sb.AppendLine(sub);
             sb.AppendLine("  CUSTOMER CONFIRMATIONS");
             sb.AppendLine($"  Former provider contacted : {(onboarding.ConfirmedFormerProvider ? "YES" : "NO")}");
             sb.AppendLine($"  SIP phones factory reset  : {(onboarding.ConfirmedFactoryReset   ? "YES" : "NO")}");
@@ -860,8 +848,6 @@ public partial class MainWindow : Window
             ["Config notes"]    = ob.ConfigNotes,
             ["Preferred time"]  = ob.PreferredTime,
             ["Attendees"]       = ob.Attendees,
-            ["SIP Server"]      = ob.SipServer,
-            ["Outbound Proxy"]  = ob.OutboundProxy,
         };
 
         foreach (var (field, value) in fields)
@@ -1044,23 +1030,6 @@ public partial class MainWindow : Window
             if (!string.IsNullOrWhiteSpace(onboarding.ConfigNotes))
                 Row("Notes", onboarding.ConfigNotes);
             sb.Append("</table>");
-
-            // SIP Configuration
-            if (!string.IsNullOrWhiteSpace(onboarding.SipServer))
-            {
-                sb.Append("""
-                      <div class="section"><span class="section-title">SIP Configuration</span><div class="section-line"></div></div>
-                      <table class="kv">
-                    """);
-                Row("SIP Server",      onboarding.SipServer);
-                Row("SIP Port",        onboarding.SipPort);
-                Row("Transport",       onboarding.SipTransport);
-                if (!string.IsNullOrWhiteSpace(onboarding.OutboundProxy))
-                    Row("Outbound Proxy", onboarding.OutboundProxy);
-                if (!string.IsNullOrWhiteSpace(onboarding.VoicemailExt))
-                    Row("Voicemail Ext", onboarding.VoicemailExt);
-                sb.Append("</table>");
-            }
 
             sb.Append("""
                   <div class="section"><span class="section-title">Customer Confirmations</span><div class="section-line"></div></div>

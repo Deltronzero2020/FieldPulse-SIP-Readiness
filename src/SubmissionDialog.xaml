@@ -39,7 +39,7 @@
                     Background="{StaticResource BgMainBrush}" BorderThickness="0">
 
             <!-- ════════════════════════════════════════════════════════
-                 TAB 1: PHONE DETAILS & SIP CONFIG
+                 TAB 1: PHONE DETAILS
                  ════════════════════════════════════════════════════════ -->
             <TabItem Header="  Phone Details  " Padding="12,8">
                 <ScrollViewer VerticalScrollBarVisibility="Auto"
@@ -167,40 +167,35 @@
                                 Margin="0,0,0,14"
                                 Click="BtnRemoveModel_Click"/>
 
-                        <!-- MAC / Serial / Extension / Display Name -->
-                        <TextBlock Text="Phone inventory:"
+                        <!-- MAC / Serial numbers -->
+                        <TextBlock Text="MAC / Serial numbers:"
                                    Style="{StaticResource FieldLabel}" Margin="0,2,0,6"/>
 
                         <!-- Column labels -->
                         <Grid Margin="0,0,0,2">
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" MinWidth="120"/>
-                                <ColumnDefinition Width="8"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="10"/>
+                                <ColumnDefinition Width="130"/>
+                                <ColumnDefinition Width="10"/>
                                 <ColumnDefinition Width="110"/>
-                                <ColumnDefinition Width="8"/>
-                                <ColumnDefinition Width="70"/>
-                                <ColumnDefinition Width="8"/>
-                                <ColumnDefinition Width="110"/>
-                                <ColumnDefinition Width="8"/>
+                                <ColumnDefinition Width="10"/>
                                 <ColumnDefinition Width="90"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="MAC Address"    Style="{StaticResource FieldLabel}" Margin="2,0,0,0"/>
-                            <TextBlock Grid.Column="2" Text="Serial Number"  Style="{StaticResource FieldLabel}" Margin="2,0,0,0"/>
-                            <TextBlock Grid.Column="4" Text="Ext"            Style="{StaticResource FieldLabel}" Margin="2,0,0,0"/>
-                            <TextBlock Grid.Column="6" Text="Display Name"   Style="{StaticResource FieldLabel}" Margin="2,0,0,0"/>
+                            <TextBlock Grid.Column="0" Text="MAC Address"   Style="{StaticResource FieldLabel}" Margin="2,0,0,0"/>
+                            <TextBlock Grid.Column="2" Text="Serial Number" Style="{StaticResource FieldLabel}" Margin="2,0,0,0"/>
+                            <TextBlock Grid.Column="4" Text="Line Label"    Style="{StaticResource FieldLabel}" Margin="2,0,0,0"/>
                         </Grid>
 
                         <!-- Input row -->
                         <Grid Margin="0,0,0,4">
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" MinWidth="120"/>
-                                <ColumnDefinition Width="8"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="10"/>
+                                <ColumnDefinition Width="130"/>
+                                <ColumnDefinition Width="10"/>
                                 <ColumnDefinition Width="110"/>
-                                <ColumnDefinition Width="8"/>
-                                <ColumnDefinition Width="70"/>
-                                <ColumnDefinition Width="8"/>
-                                <ColumnDefinition Width="110"/>
-                                <ColumnDefinition Width="8"/>
+                                <ColumnDefinition Width="10"/>
                                 <ColumnDefinition Width="90"/>
                             </Grid.ColumnDefinitions>
                             <TextBox x:Name="txtMacInput" Grid.Column="0"
@@ -213,15 +208,11 @@
                                      Style="{StaticResource FlatTextBox}"
                                      MaxLength="40"
                                      ToolTip="Serial number (optional)"/>
-                            <TextBox x:Name="txtMacExt" Grid.Column="4"
-                                     Style="{StaticResource FlatTextBox}"
-                                     MaxLength="10"
-                                     ToolTip="Extension e.g. 101"/>
-                            <TextBox x:Name="txtMacDisplayName" Grid.Column="6"
+                            <TextBox x:Name="txtMacLabel" Grid.Column="4"
                                      Style="{StaticResource FlatTextBox}"
                                      MaxLength="40"
-                                     ToolTip="Caller ID name e.g. Front Desk"/>
-                            <Button x:Name="btnAddMac" Grid.Column="8"
+                                     ToolTip="e.g. Front Desk (optional)"/>
+                            <Button x:Name="btnAddMac" Grid.Column="6"
                                     Style="{StaticResource SmallPrimaryButton}"
                                     Content="+ Add" Height="38"
                                     Click="BtnAddMac_Click"/>
@@ -230,22 +221,18 @@
                         <TextBlock x:Name="errMac" Foreground="#CF222E" FontSize="11"
                                    Margin="0,0,0,4" Visibility="Collapsed"/>
 
-                        <!-- Phone inventory list -->
+                        <!-- MAC list -->
                         <Border BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
                                 CornerRadius="5" Margin="0,0,0,4">
                             <ListView x:Name="lvMacs" BorderThickness="0" Background="White"
-                                      MinHeight="56" MaxHeight="160" SelectionMode="Single">
+                                      MinHeight="56" MaxHeight="150" SelectionMode="Single">
                                 <ListView.View>
                                     <GridView>
-                                        <GridViewColumn Header="MAC Address" Width="150"
+                                        <GridViewColumn Header="MAC Address" Width="170"
                                                         DisplayMemberBinding="{Binding MACAddress}"/>
-                                        <GridViewColumn Header="Serial"      Width="100"
+                                        <GridViewColumn Header="Serial"      Width="120"
                                                         DisplayMemberBinding="{Binding SerialNumber}"/>
-                                        <GridViewColumn Header="Ext"         Width="55"
-                                                        DisplayMemberBinding="{Binding Extension}"/>
-                                        <GridViewColumn Header="Display Name" Width="120"
-                                                        DisplayMemberBinding="{Binding DisplayName}"/>
-                                        <GridViewColumn Header="Label"       Width="100"
+                                        <GridViewColumn Header="Label"       Width="130"
                                                         DisplayMemberBinding="{Binding LineLabel}"/>
                                     </GridView>
                                 </ListView.View>
@@ -289,107 +276,6 @@
                                            Text="No CSV uploaded."/>
                             </StackPanel>
                         </Border>
-
-                        <!-- SECTION: SIP CONFIGURATION -->
-                        <Grid Margin="0,18,0,12">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="SIP CONFIGURATION"
-                                       FontSize="11" FontWeight="Bold"
-                                       Foreground="{StaticResource NavyBrush}"
-                                       VerticalAlignment="Center" Margin="0,0,10,0"/>
-                            <Rectangle Grid.Column="1" Height="1"
-                                       Fill="{StaticResource BorderBrush}" VerticalAlignment="Center"/>
-                        </Grid>
-
-                        <Border Background="{StaticResource NavyTintBrush}" CornerRadius="6"
-                                Padding="14,10" Margin="0,0,0,10">
-                            <TextBlock TextWrapping="Wrap" FontSize="11"
-                                       Foreground="{StaticResource TextSecBrush}">
-                                These settings are used to generate provisioning configuration files
-                                for your phones. If you don't know these values, FieldPulse will
-                                provide them during onboarding.
-                            </TextBlock>
-                        </Border>
-
-                        <!-- SIP Server -->
-                        <Grid Margin="0,0,0,10">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="160"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="SIP Server / Domain:"
-                                       Style="{StaticResource FieldLabel}"/>
-                            <TextBox x:Name="txtSipServer" Grid.Column="1"
-                                     Style="{StaticResource FlatTextBox}"
-                                     MaxLength="120"
-                                     ToolTip="e.g. sip.fieldpulse.com or 54.172.60.0"/>
-                        </Grid>
-
-                        <!-- SIP Port + Transport side by side -->
-                        <Grid Margin="0,0,0,10">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="160"/>
-                                <ColumnDefinition Width="100"/>
-                                <ColumnDefinition Width="20"/>
-                                <ColumnDefinition Width="160"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="SIP Port:"
-                                       Style="{StaticResource FieldLabel}"/>
-                            <TextBox x:Name="txtSipPort" Grid.Column="1"
-                                     Style="{StaticResource FlatTextBox}"
-                                     Text="5060" MaxLength="5"
-                                     ToolTip="Default: 5060 (or 5061 for TLS)"/>
-                            <TextBlock Grid.Column="3" Text="Transport:"
-                                       Style="{StaticResource FieldLabel}"/>
-                            <ComboBox x:Name="cmbSipTransport" Grid.Column="4"
-                                      Style="{StaticResource FlatComboBox}"
-                                      IsEditable="False" SelectedIndex="0">
-                                <ComboBoxItem>UDP</ComboBoxItem>
-                                <ComboBoxItem>TCP</ComboBoxItem>
-                                <ComboBoxItem>TLS</ComboBoxItem>
-                            </ComboBox>
-                        </Grid>
-
-                        <!-- Outbound Proxy -->
-                        <Grid Margin="0,0,0,10">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="160"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="Outbound Proxy:"
-                                       Style="{StaticResource FieldLabel}"/>
-                            <TextBox x:Name="txtOutboundProxy" Grid.Column="1"
-                                     Style="{StaticResource FlatTextBox}"
-                                     MaxLength="120"
-                                     ToolTip="Optional — leave blank if not required"/>
-                        </Grid>
-
-                        <!-- Voicemail Extension -->
-                        <Grid Margin="0,0,0,10">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="160"/>
-                                <ColumnDefinition Width="100"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="Voicemail Ext:"
-                                       Style="{StaticResource FieldLabel}"/>
-                            <TextBox x:Name="txtVoicemailExt" Grid.Column="1"
-                                     Style="{StaticResource FlatTextBox}"
-                                     MaxLength="10"
-                                     ToolTip="e.g. *97 or 9999"/>
-                        </Grid>
-
-                        <!-- Export Provisioning button -->
-                        <Button x:Name="btnExportConfigs"
-                                Style="{StaticResource SecondaryButton}"
-                                Content="&#x2B07;  Export Provisioning Configs"
-                                Width="250" HorizontalAlignment="Left"
-                                Margin="0,4,0,8"
-                                Click="BtnExportConfigs_Click"
-                                ToolTip="Generate brand-specific config files for each phone in the inventory"/>
 
                         <Rectangle Height="8"/>
                     </StackPanel>

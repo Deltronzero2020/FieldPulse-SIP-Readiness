@@ -193,22 +193,10 @@ public partial class SubmissionDialog : Window
             return;
         }
 
-        string ext         = txtMacExt.Text.Trim();
-        string displayName = txtMacDisplayName.Text.Trim();
-
-        if (!string.IsNullOrEmpty(ext) && !Regex.IsMatch(ext, @"^\d{1,10}$"))
-        {
-            errMac.Text = "Extension must be numeric.";
-            errMac.Visibility = Visibility.Visible;
-            txtMacExt.Focus();
-            return;
-        }
-
-        _macEntries.Add(new PhoneEntry { MACAddress = mac, SerialNumber = serial, Extension = ext, DisplayName = displayName, LineLabel = label });
+        _macEntries.Add(new PhoneEntry { MACAddress = mac, SerialNumber = serial, LineLabel = label });
         txtMacInput.Clear();
         txtMacSerial.Clear();
-        txtMacExt.Clear();
-        txtMacDisplayName.Clear();
+        txtMacLabel.Clear();
         txtMacInput.Focus();
     }
 
@@ -583,8 +571,6 @@ public partial class SubmissionDialog : Window
                                           ? string.Join("; ", _macEntries.Select(me =>
                                               $"{me.MACAddress}" +
                                               (string.IsNullOrEmpty(me.SerialNumber) ? "" : $" / {me.SerialNumber}") +
-                                              (string.IsNullOrEmpty(me.Extension)    ? "" : $" x{me.Extension}") +
-                                              (string.IsNullOrEmpty(me.DisplayName)  ? "" : $" \"{me.DisplayName}\"") +
                                               (string.IsNullOrEmpty(me.LineLabel)    ? "" : $" ({me.LineLabel})")))
                                           : "",
             ConfigNotes             = txtConfigNotes.Text.Trim(),
@@ -594,96 +580,9 @@ public partial class SubmissionDialog : Window
             ConfirmedFactoryReset   = chkFactoryReset.IsChecked   == true,
             ConfirmedFirmware       = chkFirmware.IsChecked        == true,
             PhoneCSV                = _csvPhones,
-            SipServer               = txtSipServer.Text.Trim(),
-            SipPort                 = string.IsNullOrEmpty(txtSipPort.Text.Trim()) ? "5060" : txtSipPort.Text.Trim(),
-            SipTransport            = GetComboText(cmbSipTransport) is { Length: > 0 } t ? t : "UDP",
-            OutboundProxy           = txtOutboundProxy.Text.Trim(),
-            VoicemailExt            = txtVoicemailExt.Text.Trim(),
         };
 
         DialogResult = true;
-    }
-
-    // ─────────────────────────────────────────────────────────────
-    // Export Provisioning Configs
-    // ─────────────────────────────────────────────────────────────
-
-    private void BtnExportConfigs_Click(object sender, RoutedEventArgs e)
-    {
-        // Collect phones from both manual entries and CSV
-        var allPhones = new List<PhoneEntry>();
-
-        foreach (var entry in _macEntries)
-        {
-            // Assign brand from checked brands if not set
-            var brands = GetSelectedBrands();
-            allPhones.Add(new PhoneEntry
-            {
-                Brand        = brands.Count > 0 ? brands[0] : "Unknown",
-                PhoneModel   = _models.Count > 0 ? _models[0] : "",
-                MACAddress   = entry.MACAddress,
-                SerialNumber = entry.SerialNumber,
-                Extension    = entry.Extension,
-                DisplayName  = entry.DisplayName,
-                LineLabel    = entry.LineLabel,
-            });
-        }
-
-        if (_csvPhones is { Count: > 0 })
-            allPhones.AddRange(_csvPhones);
-
-        if (allPhones.Count == 0)
-        {
-            MessageBox.Show("Add at least one phone (via the inventory table or CSV upload) before exporting configs.",
-                "No Phones", MessageBoxButton.OK, MessageBoxImage.Information);
-            return;
-        }
-
-        // Check for phones without extensions
-        var noExt = allPhones.Where(p => string.IsNullOrEmpty(p.Extension)).ToList();
-        if (noExt.Count > 0)
-        {
-            var choice = MessageBox.Show(
-                $"{noExt.Count} phone(s) have no extension number assigned.\n\n" +
-                "Configs will be generated but may be incomplete. Continue?",
-                "Missing Extensions", MessageBoxButton.YesNo, MessageBoxImage.Warning);
-            if (choice != MessageBoxResult.Yes) return;
-        }
-
-        string sipServer = txtSipServer.Text.Trim();
-        if (string.IsNullOrEmpty(sipServer))
-        {
-            MessageBox.Show("Enter a SIP Server address before exporting configs.",
-                "SIP Server Required", MessageBoxButton.OK, MessageBoxImage.Warning);
-            txtSipServer.Focus();
-            return;
-        }
-
-        string sipPort    = string.IsNullOrEmpty(txtSipPort.Text.Trim()) ? "5060" : txtSipPort.Text.Trim();
-        string transport  = GetComboText(cmbSipTransport) is { Length: > 0 } t ? t : "UDP";
-        string proxy      = txtOutboundProxy.Text.Trim();
-        string vm         = txtVoicemailExt.Text.Trim();
-
-        var dlg = new SaveFileDialog
-        {
-            Title      = "Save Provisioning Configs",
-            FileName   = $"FieldPulse-SIP-Configs-{DateTime.Now:yyyyMMdd}.zip",
-            Filter     = "ZIP archive (*.zip)|*.zip",
-            DefaultExt = ".zip"
-        };
-        if (dlg.ShowDialog() != true) return;
-
-        try
-        {
-            byte[] zipBytes = ProvisioningGenerator.GenerateZip(allPhones, sipServer, sipPort, transport, proxy, vm);
-            File.WriteAllBytes(dlg.FileName, zipBytes);
-            MessageBox.Show($"Provisioning configs exported!\n\n{allPhones.Count} config file(s) saved to:\n{dlg.FileName}\n\nRemember to replace [SET_PASSWORD] in each file with the actual SIP passwords.",
-                "Export Complete", MessageBoxButton.OK, MessageBoxImage.Information);
-        }
-        catch (Exception ex)
-        {
-            MessageBox.Show($"Export failed:\n{ex.Message}", "Export Error", MessageBoxButton.OK, MessageBoxImage.Error);
-        }
     }
 
     // ─────────────────────────────────────────────────────────────
