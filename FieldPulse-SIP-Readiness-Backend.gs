@@ -480,3 +480,28 @@ function doGet(e) {
     .createTextOutput('FieldPulse SIP Readiness webhook is active. v2.1')
     .setMimeType(ContentService.MimeType.TEXT);
 }
+
+
+/**
+ * TEST — Run this manually from the editor to verify email permissions.
+ * 1. Select this function from the dropdown
+ * 2. Click Run
+ * 3. Authorize when prompted
+ * 4. Check your inbox for the test email
+ */
+function testEmailPermissions() {
+  var testHtml = '<div style="font-family:Segoe UI,Arial,sans-serif;padding:20px;">'
+    + '<h2 style="color:#00034D;">FieldPulse SIP Readiness — Email Test</h2>'
+    + '<p>If you received this email, GmailApp permissions are working correctly.</p>'
+    + '<p style="color:#57606A;font-size:12px;">Sent at: ' + new Date().toISOString() + '</p>'
+    + '</div>';
+
+  GmailApp.sendEmail(
+    NOTIFY_EMAIL,
+    '[SIP Readiness] Email Permission Test',
+    'This is a test email to verify GmailApp permissions.',
+    { htmlBody: testHtml }
+  );
+
+  Logger.log('Test email sent successfully to ' + NOTIFY_EMAIL);
+}
