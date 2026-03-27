@@ -299,18 +299,17 @@ public partial class MainWindow : Window
             double avg    = rtts.Average();
             long   jitter = rtts.Max() - rtts.Min();
             int    lost   = 5 - rtts.Count;
-            string detail = status switch
-            {
-                _ when avg <= MaxLatencyGoodMs && jitter <= MaxJitterGoodMs =>
-                    $"Your connection is fast and stable — great for phone calls. (Speed: {avg:F0}ms, Stability: {jitter}ms)",
-                _ when avg <= MaxLatencyWarnMs && jitter <= MaxJitterWarnMs =>
-                    $"Your connection is OK but could be better. Calls may have minor quality issues during heavy internet use. (Speed: {avg:F0}ms, Stability: {jitter}ms)",
-                _ =>
-                    $"Your connection may be too slow for reliable phone calls. Contact your internet provider about improving speed. (Speed: {avg:F0}ms, Stability: {jitter}ms)",
-            };
 
             string status2 = (avg <= MaxLatencyGoodMs && jitter <= MaxJitterGoodMs) ? "PASS"
                           : (avg <= MaxLatencyWarnMs && jitter <= MaxJitterWarnMs) ? "WARN" : "FAIL";
+
+            string detail = status2 switch
+            {
+                "PASS" => $"Your connection is fast and stable — great for phone calls. (Speed: {avg:F0}ms, Stability: {jitter}ms)",
+                "WARN" => $"Your connection is OK but could be better. Calls may have minor quality issues during heavy internet use. (Speed: {avg:F0}ms, Stability: {jitter}ms)",
+                _      => $"Your connection may be too slow for reliable phone calls. Contact your internet provider about improving speed. (Speed: {avg:F0}ms, Stability: {jitter}ms)",
+            };
+
             string label2 = status2 switch
             {
                 "PASS" => $"Connection speed: Excellent — {label}",
