@@ -47,13 +47,23 @@
                               Padding="24,16,24,16">
                     <StackPanel>
 
+                        <Border Background="{StaticResource NavyTintBrush}" CornerRadius="6"
+                                Padding="14,10" Margin="0,0,0,14">
+                            <TextBlock TextWrapping="Wrap" FontSize="12"
+                                       Foreground="{StaticResource TextSecBrush}">
+                                Tell us about the phones you'll be using. Don't worry if you're not sure
+                                about some of these — just fill in what you can and FieldPulse will help
+                                with the rest during your setup call.
+                            </TextBlock>
+                        </Border>
+
                         <!-- SECTION: PHONE DETAILS -->
                         <Grid Margin="0,0,0,12">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="PHONE DETAILS"
+                            <TextBlock Grid.Column="0" Text="ABOUT YOUR PHONES"
                                        FontSize="11" FontWeight="Bold"
                                        Foreground="{StaticResource NavyBrush}"
                                        VerticalAlignment="Center" Margin="0,0,10,0"/>
@@ -85,17 +95,20 @@
                                 <ColumnDefinition Width="160"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="Configuration type:"
+                            <TextBlock Grid.Column="0" Text="Phone system type:"
                                        Style="{StaticResource FieldLabel}"/>
                             <StackPanel Grid.Column="1">
                                 <ComboBox x:Name="cmbConfigType"
                                           Style="{StaticResource FlatComboBox}"
                                           IsEditable="True" Text="">
-                                    <ComboBoxItem>Cloud / Hosted PBX</ComboBoxItem>
-                                    <ComboBoxItem>On-Premise PBX</ComboBoxItem>
-                                    <ComboBoxItem>Direct SIP (no PBX)</ComboBoxItem>
+                                    <ComboBoxItem>Cloud / Hosted (phone service is online)</ComboBoxItem>
+                                    <ComboBoxItem>On-Site System (phone system is in your office)</ComboBoxItem>
+                                    <ComboBoxItem>Direct Connection (phones connect straight to provider)</ComboBoxItem>
+                                    <ComboBoxItem>Not sure</ComboBoxItem>
                                     <ComboBoxItem>Other</ComboBoxItem>
                                 </ComboBox>
+                                <TextBlock FontSize="10.5" Foreground="#8C959F" Margin="0,3,0,0"
+                                           Text="Not sure? Choose 'Not sure' — FieldPulse will figure it out."/>
                                 <TextBlock x:Name="errConfigType" Foreground="#CF222E" FontSize="11"
                                            Margin="0,2,0,0" Visibility="Collapsed"/>
                             </StackPanel>
@@ -135,7 +148,9 @@
 
                         <!-- Phone model(s) — add-to-list -->
                         <TextBlock Text="Phone model(s):" Style="{StaticResource FieldLabel}"
-                                   Margin="0,2,0,6"/>
+                                   Margin="0,2,0,2"/>
+                        <TextBlock FontSize="10.5" Foreground="#8C959F" Margin="0,0,0,6" TextWrapping="Wrap"
+                                   Text="Look for a model number on the front or bottom of the phone (e.g. T46S, VVX250, SPA504G). Type it and press Enter or click Add."/>
                         <Grid Margin="0,0,0,4">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
@@ -168,8 +183,10 @@
                                 Click="BtnRemoveModel_Click"/>
 
                         <!-- MAC / Serial numbers -->
-                        <TextBlock Text="MAC / Serial numbers:"
-                                   Style="{StaticResource FieldLabel}" Margin="0,2,0,6"/>
+                        <TextBlock Text="Phone identification (optional):"
+                                   Style="{StaticResource FieldLabel}" Margin="0,2,0,2"/>
+                        <TextBlock FontSize="10.5" Foreground="#8C959F" Margin="0,0,0,6" TextWrapping="Wrap"
+                                   Text="If you can find these, great — they're on a sticker on the bottom or back of each phone. If not, skip this and FieldPulse will collect them during setup."/>
 
                         <!-- Column labels -->
                         <Grid Margin="0,0,0,2">
@@ -429,20 +446,29 @@
             </TabItem>
 
             <!-- ════════════════════════════════════════════════════════
-                 TAB 3: CONFIRMATIONS
+                 TAB 3: BEFORE WE BEGIN
                  ════════════════════════════════════════════════════════ -->
-            <TabItem Header="  Confirmations  " Padding="12,8">
+            <TabItem Header="  Before We Begin  " Padding="12,8">
                 <ScrollViewer VerticalScrollBarVisibility="Auto"
                               HorizontalScrollBarVisibility="Disabled"
                               Padding="24,16,24,16">
                     <StackPanel>
 
+                        <TextBlock TextWrapping="Wrap" FontSize="12" Margin="0,0,0,16"
+                                   Foreground="{StaticResource TextSecBrush}">
+                            Before FieldPulse can set up your phones, we need to make sure a few things
+                            are taken care of. Please read each item and check the box if it applies.
+                            If you're not sure about something, check it anyway and your FieldPulse
+                            representative will walk you through it.
+                        </TextBlock>
+
+                        <!-- ── SWITCHING FROM ANOTHER PROVIDER ── -->
                         <Grid Margin="0,0,0,12">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="CONFIRMATIONS"
+                            <TextBlock Grid.Column="0" Text="SWITCHING FROM ANOTHER PHONE COMPANY"
                                        FontSize="11" FontWeight="Bold"
                                        Foreground="{StaticResource NavyBrush}"
                                        VerticalAlignment="Center" Margin="0,0,10,0"/>
@@ -450,42 +476,180 @@
                                        Fill="{StaticResource BorderBrush}" VerticalAlignment="Center"/>
                         </Grid>
 
-                        <TextBlock TextWrapping="Wrap" FontSize="12" Margin="0,0,0,16"
-                                   Foreground="{StaticResource TextSecBrush}">
-                            Please review and check all boxes below before submitting.
-                            These confirm that your environment is prepared for SIP phone provisioning.
-                        </TextBlock>
+                        <Border Background="White" CornerRadius="6" Padding="18,16"
+                                BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
+                                Margin="0,0,0,6">
+                            <StackPanel>
+                                <!-- New phones option -->
+                                <CheckBox x:Name="chkNewPhones"
+                                          FontSize="12" Foreground="{StaticResource TextPrimaryBrush}"
+                                          Margin="0,0,0,14"
+                                          AutomationProperties.Name="New phones confirmation">
+                                    <StackPanel>
+                                        <TextBlock Text="These are brand new phones — I'm not switching from another phone company."
+                                                   TextWrapping="Wrap" FontSize="12" FontWeight="SemiBold"/>
+                                        <TextBlock Text="Check this if you bought new phones and don't have a previous phone provider. Skip the next three items."
+                                                   TextWrapping="Wrap" FontSize="10.5" Foreground="#8C959F" Margin="0,3,0,0"/>
+                                    </StackPanel>
+                                </CheckBox>
+
+                                <Rectangle Height="1" Fill="{StaticResource BorderBrush}" Margin="0,0,0,14"/>
+
+                                <!-- Former provider contacted -->
+                                <CheckBox x:Name="chkFormerProvider"
+                                          FontSize="12" Foreground="{StaticResource TextPrimaryBrush}"
+                                          Margin="0,0,0,4"
+                                          AutomationProperties.Name="Former provider confirmation">
+                                    <StackPanel>
+                                        <TextBlock Text="I've contacted my old phone company about switching to FieldPulse."
+                                                   TextWrapping="Wrap" FontSize="12" FontWeight="SemiBold"/>
+                                        <TextBlock Text="This includes letting them know you're moving your phone service. If you want to keep your current phone numbers, tell them you'll be 'porting' your numbers to a new provider."
+                                                   TextWrapping="Wrap" FontSize="10.5" Foreground="#8C959F" Margin="0,3,0,0"/>
+                                    </StackPanel>
+                                </CheckBox>
+                                <Expander Header="  What does my IT team need to know?" Margin="24,2,0,14"
+                                          FontSize="10.5" Foreground="#0550AE" IsExpanded="False">
+                                    <TextBlock TextWrapping="Wrap" FontSize="10.5" Foreground="#57606A" Margin="4,4,0,4">
+                                        Initiate number porting (LNP) or cancellation with the previous carrier.
+                                        Obtain the account number, PIN, and authorized contact name needed for
+                                        the port request. FieldPulse will coordinate the port date once the
+                                        LOA (Letter of Authorization) is signed.
+                                    </TextBlock>
+                                </Expander>
+
+                                <!-- Phones released -->
+                                <CheckBox x:Name="chkPhonesReleased"
+                                          FontSize="12" Foreground="{StaticResource TextPrimaryBrush}"
+                                          Margin="0,0,0,4"
+                                          AutomationProperties.Name="Phones released confirmation">
+                                    <StackPanel>
+                                        <TextBlock Text="My old phone company has released my phones so they can be set up with FieldPulse."
+                                                   TextWrapping="Wrap" FontSize="12" FontWeight="SemiBold"/>
+                                        <TextBlock TextWrapping="Wrap" FontSize="10.5" Foreground="#8C959F" Margin="0,3,0,0">
+                                            When phones are connected to another provider, that provider controls them. They need to
+                                            'release' or 'deprovision' the phones before FieldPulse can configure them. Call your old
+                                            provider and ask them to: remove the phones from their system, clear any setup passwords
+                                            they put on the phones, and confirm the phones are no longer tied to their service.
+                                        </TextBlock>
+                                    </StackPanel>
+                                </CheckBox>
+                                <Expander Header="  What does my IT team need to know?" Margin="24,2,0,14"
+                                          FontSize="10.5" Foreground="#0550AE" IsExpanded="False">
+                                    <TextBlock TextWrapping="Wrap" FontSize="10.5" Foreground="#57606A" Margin="4,4,0,4">
+                                        Previous provider must deprovision all devices: remove SIP registrations,
+                                        clear auto-provisioning server URLs (DHCP Option 66 / Option 160), and
+                                        release any provisioning or admin passwords. If phones were using
+                                        zero-touch provisioning (RPS/GDMS/ZTP), the redirect records must be
+                                        deleted from the manufacturer's provisioning portal. Without this,
+                                        phones will re-register to the old provider after a reboot.
+                                    </TextBlock>
+                                </Expander>
+
+                                <!-- Provisioning passwords -->
+                                <CheckBox x:Name="chkProvisioningPasswords"
+                                          FontSize="12" Foreground="{StaticResource TextPrimaryBrush}"
+                                          Margin="0,0,0,4"
+                                          AutomationProperties.Name="Provisioning passwords confirmation">
+                                    <StackPanel>
+                                        <TextBlock Text="If my phones have a setup password from my old provider, I have that password or it's been removed."
+                                                   TextWrapping="Wrap" FontSize="12" FontWeight="SemiBold"/>
+                                        <TextBlock TextWrapping="Wrap" FontSize="10.5" Foreground="#8C959F" Margin="0,3,0,0">
+                                            Some phone companies lock the phone settings with a password. If your old provider did this,
+                                            you'll need that password so FieldPulse can access the phone's settings, or ask your old provider
+                                            to remove the password before they disconnect your service.
+                                        </TextBlock>
+                                    </StackPanel>
+                                </CheckBox>
+                                <Expander Header="  What does my IT team need to know?" Margin="24,2,0,14"
+                                          FontSize="10.5" Foreground="#0550AE" IsExpanded="False">
+                                    <TextBlock TextWrapping="Wrap" FontSize="10.5" Foreground="#57606A" Margin="4,4,0,4">
+                                        Obtain or clear: web UI admin password, provisioning server credentials,
+                                        and any configuration encryption keys. For Polycom devices, check for
+                                        a provisioning server lock in Settings > Provisioning Server. For Yealink,
+                                        check Auto Provision > Config Encryption. For Cisco, check the TFTP
+                                        configuration lock. Document all credentials and share with FieldPulse
+                                        during onboarding.
+                                    </TextBlock>
+                                </Expander>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- ── PHONE PREPARATION ── -->
+                        <Grid Margin="0,14,0,12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="GETTING YOUR PHONES READY"
+                                       FontSize="11" FontWeight="Bold"
+                                       Foreground="{StaticResource NavyBrush}"
+                                       VerticalAlignment="Center" Margin="0,0,10,0"/>
+                            <Rectangle Grid.Column="1" Height="1"
+                                       Fill="{StaticResource BorderBrush}" VerticalAlignment="Center"/>
+                        </Grid>
 
                         <Border Background="White" CornerRadius="6" Padding="18,16"
                                 BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
                                 Margin="0,0,0,6">
                             <StackPanel>
-                                <CheckBox x:Name="chkFormerProvider"
-                                          FontSize="12" Foreground="{StaticResource TextPrimaryBrush}"
-                                          Margin="0,0,0,14"
-                                          AutomationProperties.Name="Former provider confirmation">
-                                    <TextBlock Text="I have contacted my former VoIP provider and arranged to port or cancel my numbers."
-                                               TextWrapping="Wrap" FontSize="12"/>
-                                </CheckBox>
+                                <!-- Factory reset -->
                                 <CheckBox x:Name="chkFactoryReset"
                                           FontSize="12" Foreground="{StaticResource TextPrimaryBrush}"
-                                          Margin="0,0,0,14"
+                                          Margin="0,0,0,4"
                                           AutomationProperties.Name="Factory reset confirmation">
-                                    <TextBlock Text="All SIP phones have been factory reset and are not provisioned to another system."
-                                               TextWrapping="Wrap" FontSize="12"/>
+                                    <StackPanel>
+                                        <TextBlock Text="I will reset my phones to factory settings before the setup call (or they're already reset)."
+                                                   TextWrapping="Wrap" FontSize="12" FontWeight="SemiBold"/>
+                                        <TextBlock TextWrapping="Wrap" FontSize="10.5" Foreground="#8C959F" Margin="0,3,0,0">
+                                            A factory reset clears all old settings from the phone so FieldPulse can start fresh.
+                                            This is like wiping a phone back to "out of the box" condition. Your FieldPulse rep can
+                                            walk you through how to do this for your specific phone brand.
+                                        </TextBlock>
+                                    </StackPanel>
                                 </CheckBox>
+                                <Expander Header="  What does my IT team need to know?" Margin="24,2,0,14"
+                                          FontSize="10.5" Foreground="#0550AE" IsExpanded="False">
+                                    <TextBlock TextWrapping="Wrap" FontSize="10.5" Foreground="#57606A" Margin="4,4,0,4">
+                                        Factory reset clears residual SIP registrations, cached credentials,
+                                        and stale provisioning URLs. For Yealink: long-press OK > Factory Reset.
+                                        For Polycom: Settings > Advanced (pw: 456) > Admin Settings > Reset to Default.
+                                        For Cisco: Settings > Device Administration > Factory Reset.
+                                        After reset, phones should show a setup wizard or "No Service" screen.
+                                    </TextBlock>
+                                </Expander>
+
+                                <!-- Firmware -->
                                 <CheckBox x:Name="chkFirmware"
                                           FontSize="12" Foreground="{StaticResource TextPrimaryBrush}"
+                                          Margin="0,0,0,4"
                                           AutomationProperties.Name="Firmware update confirmation">
-                                    <TextBlock Text="I will update phone firmware to the latest version before the onboarding session."
-                                               TextWrapping="Wrap" FontSize="12"/>
+                                    <StackPanel>
+                                        <TextBlock Text="I will make sure my phones are updated to the latest software version before the setup call."
+                                                   TextWrapping="Wrap" FontSize="12" FontWeight="SemiBold"/>
+                                        <TextBlock TextWrapping="Wrap" FontSize="10.5" Foreground="#8C959F" Margin="0,3,0,0">
+                                            Phone manufacturers release updates that fix bugs and improve call quality.
+                                            Having the latest version makes setup smoother. If you're not sure how to update,
+                                            FieldPulse can help during your setup call.
+                                        </TextBlock>
+                                    </StackPanel>
                                 </CheckBox>
+                                <Expander Header="  What does my IT team need to know?" Margin="24,2,0,8"
+                                          FontSize="10.5" Foreground="#0550AE" IsExpanded="False">
+                                    <TextBlock TextWrapping="Wrap" FontSize="10.5" Foreground="#57606A" Margin="4,4,0,4">
+                                        Update firmware to the latest stable release from the manufacturer
+                                        (not beta/RC). Check: Yealink support.yealink.com, Polycom
+                                        support.polycom.com, Cisco software.cisco.com, Grandstream
+                                        firmware.grandstream.com. Current firmware ensures TLS 1.2 support,
+                                        modern codec negotiation, and compatibility with FieldPulse
+                                        provisioning templates.
+                                    </TextBlock>
+                                </Expander>
                             </StackPanel>
                         </Border>
 
                         <TextBlock x:Name="errConfirmations" Foreground="#CF222E" FontSize="11"
                                    Margin="0,4,0,8" Visibility="Collapsed"
-                                   Text="Please review and check all confirmation boxes."/>
+                                   Text="Please review and check all applicable boxes above."/>
 
                         <!-- Global error banner -->
                         <Border x:Name="pnlGlobalError" Background="#FFEBE9" CornerRadius="6"

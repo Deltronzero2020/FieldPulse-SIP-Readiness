@@ -124,33 +124,33 @@ public partial class MainWindow : Window
     private async Task RunChecks()
     {
         // ── Check 1: Network adapters ─────────────────────────────
-        SetStatus("Checking network connection type...", 5);
-        AddSection("1.  NETWORK CONNECTION TYPE");
+        SetStatus("Checking your internet connection...", 5);
+        AddSection("1.  YOUR INTERNET CONNECTION");
         await RunCheck1();
 
         // ── Check 2: IP Connectivity (parallel) ──────────────────
-        SetStatus("Testing connectivity to all FieldPulse IPs in parallel...", 18);
-        AddSection("2.  CONNECTIVITY TO FIELDPULSE IPs");
+        SetStatus("Connecting to FieldPulse servers...", 18);
+        AddSection("2.  CONNECTING TO FIELDPULSE");
         await RunCheck2();
 
         // ── Check 2b: Latency & Jitter ───────────────────────────
-        SetStatus("Testing latency and jitter...", 52);
-        AddSection("2b.  LATENCY & JITTER");
+        SetStatus("Measuring connection speed...", 52);
+        AddSection("3.  CONNECTION SPEED & QUALITY");
         await RunCheck2b();
 
         // ── Check 3: Router ──────────────────────────────────────
-        SetStatus("Detecting router configuration...", 65);
-        AddSection("3.  ROUTER & GATEWAY CONFIGURATION");
+        SetStatus("Checking your router...", 65);
+        AddSection("4.  YOUR ROUTER");
         await RunCheck3();
 
         // ── Check 4: Device discovery ────────────────────────────
-        SetStatus("Scanning network devices...", 85);
-        AddSection("4.  DEVICES ON YOUR NETWORK");
+        SetStatus("Looking for phones on your network...", 85);
+        AddSection("5.  PHONES ON YOUR NETWORK");
         await RunCheck4();
 
         // ── Summary ───────────────────────────────────────────────
         ShowSummary();
-        SetStatus("Done!  Click  Send to FieldPulse  or  Save Report.", 100);
+        SetStatus("All done!  Click  Send to FieldPulse  to share your results.", 100);
     }
 
     // ── Check 1 implementation ─────────────────────────────────────
@@ -171,12 +171,12 @@ public partial class MainWindow : Window
 
             if (wired.Count > 0)
                 foreach (var a in wired)
-                    AddResult($"Wired adapter active  —  {a.Name}", a.Description, "PASS");
+                    AddResult("Wired connection found", $"Your computer has a wired (Ethernet) connection — this is ideal for phone service. ({a.Name})", "PASS");
             else
-                AddResult("No wired adapter found", "Use Ethernet for SIP phones when possible", "WARN");
+                AddResult("No wired connection detected", "SIP phones work best with a wired (Ethernet) connection. If possible, connect phones directly to your router with a network cable.", "WARN");
 
             foreach (var a in wireless)
-                AddResult($"Wi-Fi adapter active  —  {a.Name}", "SIP phones should use a wired connection", "INFO");
+                AddResult("Wi-Fi connection found", $"Your computer is connected via Wi-Fi. Phones should use a wired connection for the best call quality. ({a.Name})", "INFO");
 
             // Gather addresses
             var ipConfig = NetworkInterface.GetAllNetworkInterfaces()
@@ -203,7 +203,7 @@ public partial class MainWindow : Window
         }
         catch { _publicIP = "Could not determine"; }
 
-        AddResult("Network addresses", $"Local: {_localIP}   Gateway: {_gateway}   Public: {_publicIP}", "INFO");
+        AddResult("Your network information", $"These details help FieldPulse configure your phones. Local IP: {_localIP} | Router: {_gateway} | Public IP: {_publicIP}", "INFO");
     }
 
     // ── Check 2 implementation (parallel TCP probes) ───────────────
@@ -222,27 +222,27 @@ public partial class MainWindow : Window
         foreach (var ip in HttpIPs)
         {
             bool ok = _tcpCache.GetValueOrDefault($"{ip}:80") || _tcpCache.GetValueOrDefault($"{ip}:443");
-            if (ok) AddResult($"HTTP IP reachable  —  {ip}", "Ports 80/443 accessible", "PASS");
-            else  { AddResult($"HTTP IP BLOCKED  —  {ip}", "Cannot reach port 80 or 443  —  update firewall", "FAIL"); allReach = false; }
+            if (ok) AddResult($"Web server connected", $"Successfully reached FieldPulse web server. (IP: {ip})", "PASS");
+            else  { AddResult($"Web server blocked", $"Cannot connect to a FieldPulse web server. Your IT team may need to allow access in the firewall. (IP: {ip}, ports 80/443)", "FAIL"); allReach = false; }
         }
         foreach (var ip in SipIPs)
         {
             bool p60 = _tcpCache.GetValueOrDefault($"{ip}:5060");
             bool p61 = _tcpCache.GetValueOrDefault($"{ip}:5061");
-            if (p60 || p61) AddResult($"SIP IP reachable  —  {ip}", $"5060: {p60}   5061/TLS: {p61}", "PASS");
-            else           { AddResult($"SIP IP BLOCKED  —  {ip}", "Ports 5060 and 5061 unreachable", "FAIL"); allReach = false; }
+            if (p60 || p61) AddResult($"Phone server connected", $"Successfully reached FieldPulse phone server. (IP: {ip})", "PASS");
+            else           { AddResult($"Phone server blocked", $"Cannot connect to a FieldPulse phone server. Your IT team may need to open ports 5060/5061 in the firewall. (IP: {ip})", "FAIL"); allReach = false; }
         }
         foreach (var ip in RtpIPs)
         {
             bool ok = _tcpCache.GetValueOrDefault($"{ip}:10000");
-            if (ok) AddResult($"RTP media IP reachable  —  {ip}", "Port 10000 accessible", "PASS");
-            else    AddResult($"RTP media IP inconclusive  —  {ip}", "RTP uses UDP — TCP probe may fail even if audio works", "WARN");
+            if (ok) AddResult($"Audio server connected", $"Successfully reached FieldPulse audio server. (IP: {ip})", "PASS");
+            else    AddResult($"Audio server test inconclusive", $"Could not confirm audio server — this is usually OK and does not mean a problem. (IP: {ip}, UDP port 10000)", "WARN");
         }
 
         if (!allReach)
-            AddResult("One or more IPs blocked", "Update your router/firewall — see FieldPulse IP whitelist", "FAIL");
+            AddResult("Some FieldPulse servers are blocked", "Share this report with your IT team — they will need to update your firewall to allow these connections.", "FAIL");
         else
-            AddResult("All required IPs reachable", "Network can reach all FieldPulse servers", "PASS");
+            AddResult("All FieldPulse servers reachable", "Your network can connect to everything needed for phone service.", "PASS");
     }
 
     private static async Task<Dictionary<string, bool>> RunParallelTcpProbes(
@@ -292,29 +292,37 @@ public partial class MainWindow : Window
 
             if (rtts.Count < 2)
             {
-                AddResult($"Latency inconclusive  —  {label}", "Fewer than 2 ICMP replies — firewall may block ping", "WARN");
+                AddResult($"Connection speed test inconclusive — {label}", "Could not measure speed — this is usually OK, your network security may be blocking the test.", "WARN");
                 return;
             }
 
             double avg    = rtts.Average();
             long   jitter = rtts.Max() - rtts.Min();
             int    lost   = 5 - rtts.Count;
-            string detail = $"Avg RTT: {avg:F0}ms   Jitter: {jitter}ms   Packet loss: {lost}/5";
-
-            string status = (avg <= MaxLatencyGoodMs && jitter <= MaxJitterGoodMs) ? "PASS"
-                          : (avg <= MaxLatencyWarnMs && jitter <= MaxJitterWarnMs) ? "WARN" : "FAIL";
-            string label2 = status switch
+            string detail = status switch
             {
-                "PASS" => $"Latency good  —  {label}",
-                "WARN" => $"Latency marginal  —  {label}",
-                _      => $"Latency too high  —  {label}",
+                _ when avg <= MaxLatencyGoodMs && jitter <= MaxJitterGoodMs =>
+                    $"Your connection is fast and stable — great for phone calls. (Speed: {avg:F0}ms, Stability: {jitter}ms)",
+                _ when avg <= MaxLatencyWarnMs && jitter <= MaxJitterWarnMs =>
+                    $"Your connection is OK but could be better. Calls may have minor quality issues during heavy internet use. (Speed: {avg:F0}ms, Stability: {jitter}ms)",
+                _ =>
+                    $"Your connection may be too slow for reliable phone calls. Contact your internet provider about improving speed. (Speed: {avg:F0}ms, Stability: {jitter}ms)",
             };
-            AddResult(label2, detail, status);
+
+            string status2 = (avg <= MaxLatencyGoodMs && jitter <= MaxJitterGoodMs) ? "PASS"
+                          : (avg <= MaxLatencyWarnMs && jitter <= MaxJitterWarnMs) ? "WARN" : "FAIL";
+            string label2 = status2 switch
+            {
+                "PASS" => $"Connection speed: Excellent — {label}",
+                "WARN" => $"Connection speed: Fair — {label}",
+                _      => $"Connection speed: Slow — {label}",
+            };
+            AddResult(label2, detail, status2);
             _reportLines.Add($"Latency {label}: {detail}");
         }
         catch
         {
-            AddResult($"Latency test failed  —  {label}", "ICMP may be blocked by firewall or host", "WARN");
+            AddResult($"Connection speed test skipped — {label}", "Your network security prevented this test — this is usually not a problem.", "WARN");
         }
     }
 
@@ -353,15 +361,15 @@ public partial class MainWindow : Window
         }
         catch { }
 
-        AddResult($"Gateway / Router detected", $"{_gateway}   Brand: {routerBrand}", "INFO");
+        AddResult($"Router identified", $"Your router ({routerBrand}) is at address {_gateway}. FieldPulse may need this info to help with setup.", "INFO");
 
         // SIP ports (use cached results from Check 2)
         bool sip60 = _tcpCache.GetValueOrDefault($"{SipIPs[0]}:5060");
         bool sip61 = _tcpCache.GetValueOrDefault($"{SipIPs[0]}:5061");
         if (sip60 || sip61)
-            AddResult("SIP signaling ports reachable at router", $"5060: {sip60}   5061/TLS: {sip61}", "PASS");
+            AddResult("Router allows phone traffic", "Your router is letting phone connections through — no changes needed.", "PASS");
         else
-            AddResult("SIP ports BLOCKED at router", "Open outbound TCP/UDP 5060 and 5061 in router firewall", "FAIL");
+            AddResult("Router is blocking phone traffic", "Your router needs to be configured to allow phone connections. Share this report with your IT team or FieldPulse rep. (Ports 5060/5061 need to be opened)", "FAIL");
 
         // SIP ALG guidance
         string sipAlgSteps = routerBrand switch
@@ -381,7 +389,7 @@ public partial class MainWindow : Window
             "WatchGuard"      => "Firewall Policies > Application Control > remove SIP ALG",
             _                 => $"Log into {routerAdminUrl} and search for 'SIP ALG', 'SIP Helper', or 'VoIP ALG'  —  disable it",
         };
-        AddResult("SIP ALG — action required", sipAlgSteps, "WARN");
+        AddResult("Router setting may interfere with calls", $"Most routers have a feature called 'SIP ALG' that can cause dropped calls. Your IT team should disable it. Steps for your {routerBrand} router: {sipAlgSteps}", "WARN");
 
         // Required ports note
         _reportLines.Add("");
@@ -390,8 +398,8 @@ public partial class MainWindow : Window
         _reportLines.Add("  Outbound  TCP     5061   -> FieldPulse SIP IPs (SIP TLS)");
         _reportLines.Add("  Outbound  UDP 10000-20000 -> 168.86.128.0/18   (RTP media)");
 
-        AddResult("Router port configuration required",
-            "Open outbound TCP/UDP 5060, TCP 5061, UDP 10000–20000 in router admin for all LAN devices", "INFO");
+        AddResult("Router may need configuration",
+            "Your IT team may need to open specific ports on your router for phone service. This is included in the report sent to FieldPulse. (TCP/UDP 5060, TCP 5061, UDP 10000–20000)", "INFO");
 
         // Windows Firewall (admin only)
         bool isAdmin = new System.Security.Principal.WindowsPrincipal(
@@ -399,7 +407,7 @@ public partial class MainWindow : Window
             .IsInRole(System.Security.Principal.WindowsBuiltInRole.Administrator);
 
         if (!isAdmin)
-            AddResult("Windows Firewall (this PC)", "Re-run as Administrator for full firewall check", "WARN");
+            AddResult("Computer firewall (partial check)", "For a complete firewall check, right-click the app and choose 'Run as Administrator'. This is optional.", "WARN");
         else
         {
             try
@@ -412,13 +420,13 @@ public partial class MainWindow : Window
 
                 bool hasConflict = HttpIPs.Concat(SipIPs).Any(ip => fw.Contains(ip));
                 if (hasConflict)
-                    AddResult("Windows Firewall (this PC)", "Blocking rule found targeting FieldPulse IP(s)  —  review outbound rules", "FAIL");
+                    AddResult("Computer firewall is blocking FieldPulse", "This computer's firewall has rules that block FieldPulse servers. Your IT team needs to update the Windows Firewall settings.", "FAIL");
                 else
-                    AddResult("Windows Firewall (this PC)", "No conflicting outbound block rules found", "PASS");
+                    AddResult("Computer firewall looks good", "No firewall rules on this computer are blocking FieldPulse phone service.", "PASS");
             }
             catch
             {
-                AddResult("Windows Firewall (this PC)", "Could not query firewall rules", "INFO");
+                AddResult("Computer firewall check skipped", "Could not check the firewall on this computer — this is OK, FieldPulse will verify during setup.", "INFO");
             }
         }
     }
@@ -431,11 +439,11 @@ public partial class MainWindow : Window
         {
             var addresses = await Dns.GetHostAddressesAsync("sip.twilio.com");
             var first = addresses.FirstOrDefault()?.ToString() ?? "?";
-            AddResult("DNS working", $"sip.twilio.com → {first}", "PASS");
+            AddResult("Internet name lookup working", $"Your network can look up server addresses — required for phone service to connect. (sip.twilio.com = {first})", "PASS");
         }
         catch
         {
-            AddResult("DNS FAILED", "Could not resolve sip.twilio.com  —  check DNS settings", "FAIL");
+            AddResult("Internet name lookup failed", "Your network cannot look up server addresses (DNS). This must be fixed for phone service to work. Contact your IT team or internet provider.", "FAIL");
         }
 
         // ARP table
@@ -450,17 +458,17 @@ public partial class MainWindow : Window
 
         if (sipFound.Count > 0)
         {
-            string list = string.Join("  |  ", sipFound.Select(d => $"{d.IP} ({d.Vendor})"));
-            AddResult($"SIP phones detected on network  —  {sipFound.Count} device(s)", list, "PASS");
+            string list = string.Join("  |  ", sipFound.Select(d => $"{d.Vendor} at {d.IP}"));
+            AddResult($"Found {sipFound.Count} phone(s) on your network", $"We detected these phones already connected: {list}", "PASS");
             _reportLines.Add("\nDETECTED SIP PHONES");
             foreach (var d in sipFound) _reportLines.Add($"  {d.IP}  {d.MAC}  ({d.Vendor})");
         }
         else
         {
-            AddResult("No known SIP phones detected", "Phones may be offline, not yet on network, or use an unlisted OUI", "INFO");
+            AddResult("No phones detected yet", "Don't worry — phones may be turned off, not yet connected, or a different brand. FieldPulse will help identify them during setup.", "INFO");
         }
 
-        AddResult($"Total devices on network  —  {devices.Count}", "Full ARP table in saved report", "INFO");
+        AddResult($"{devices.Count} device(s) found on your network", "FieldPulse will use this to help configure your phones. Full details are included in the report.", "INFO");
     }
 
     private List<(string IP, string MAC, string Vendor)> GetArpTable()
@@ -503,25 +511,25 @@ public partial class MainWindow : Window
         {
             pnlSummary.Background    = new SolidColorBrush(Color.FromRgb(255, 235, 233));
             pnlSummary.BorderBrush   = new SolidColorBrush(Color.FromRgb(207, 34, 46));
-            lblSummaryTitle.Text     = $"✗  Action required  —  {fail} issue(s) must be resolved before SIP phones can register.";
+            lblSummaryTitle.Text     = $"✗  {fail} issue(s) need to be fixed before your phones will work.";
             lblSummaryTitle.Foreground = new SolidColorBrush(Color.FromRgb(207, 34, 46));
         }
         else if (warn > 2)
         {
             pnlSummary.Background    = new SolidColorBrush(Color.FromRgb(255, 248, 197));
             pnlSummary.BorderBrush   = new SolidColorBrush(Color.FromRgb(154, 103, 0));
-            lblSummaryTitle.Text     = "⚠  Some warnings need attention before onboarding.";
+            lblSummaryTitle.Text     = "⚠  A few things may need attention — FieldPulse will review with you.";
             lblSummaryTitle.Foreground = new SolidColorBrush(Color.FromRgb(154, 103, 0));
         }
         else
         {
             pnlSummary.Background    = new SolidColorBrush(Color.FromRgb(218, 251, 225));
             pnlSummary.BorderBrush   = new SolidColorBrush(Color.FromRgb(26, 127, 55));
-            lblSummaryTitle.Text     = "✓  Your environment looks ready!";
+            lblSummaryTitle.Text     = "✓  Everything looks good — you're ready for FieldPulse phone service!";
             lblSummaryTitle.Foreground = new SolidColorBrush(Color.FromRgb(26, 127, 55));
         }
 
-        lblSummaryDetail.Text = $"Results: {pass} PASS  ·  {warn} WARN  ·  {fail} FAIL";
+        lblSummaryDetail.Text = $"{pass} passed  ·  {warn} needs review  ·  {fail} needs action";
     }
 
     // ── Send to FieldPulse ─────────────────────────────────────────
@@ -589,9 +597,12 @@ public partial class MainWindow : Window
             ["config_notes"]              = onboarding.ConfigNotes,
             ["preferred_time"]            = onboarding.PreferredTime,
             ["attendees"]                 = onboarding.Attendees,
-            ["confirmed_former_provider"] = onboarding.ConfirmedFormerProvider,
-            ["confirmed_factory_reset"]   = onboarding.ConfirmedFactoryReset,
-            ["confirmed_firmware"]        = onboarding.ConfirmedFirmware,
+            ["confirmed_new_phones"]              = onboarding.ConfirmedNewPhones,
+            ["confirmed_former_provider"]         = onboarding.ConfirmedFormerProvider,
+            ["confirmed_phones_released"]         = onboarding.ConfirmedPhonesReleased,
+            ["confirmed_provisioning_passwords"]  = onboarding.ConfirmedProvisioningPasswords,
+            ["confirmed_factory_reset"]           = onboarding.ConfirmedFactoryReset,
+            ["confirmed_firmware"]                = onboarding.ConfirmedFirmware,
             ["phone_csv"]                 = onboarding.PhoneCSV is { Count: > 0 }
                                               ? JsonSerializer.Serialize(onboarding.PhoneCSV)
                                               : "",
@@ -793,9 +804,12 @@ public partial class MainWindow : Window
             sb.AppendLine($"  Attendee(s)    : {onboarding.Attendees}");
             sb.AppendLine(sub);
             sb.AppendLine("  CUSTOMER CONFIRMATIONS");
-            sb.AppendLine($"  Former provider contacted : {(onboarding.ConfirmedFormerProvider ? "YES" : "NO")}");
-            sb.AppendLine($"  SIP phones factory reset  : {(onboarding.ConfirmedFactoryReset   ? "YES" : "NO")}");
-            sb.AppendLine($"  Firmware updated          : {(onboarding.ConfirmedFirmware       ? "YES" : "NO")}");
+            sb.AppendLine($"  Brand new phones (no prev. provider) : {(onboarding.ConfirmedNewPhones ? "YES" : "NO")}");
+            sb.AppendLine($"  Former provider contacted            : {(onboarding.ConfirmedFormerProvider ? "YES" : "NO")}");
+            sb.AppendLine($"  Phones released by prev. provider    : {(onboarding.ConfirmedPhonesReleased ? "YES" : "NO")}");
+            sb.AppendLine($"  Provisioning passwords cleared       : {(onboarding.ConfirmedProvisioningPasswords ? "YES" : "NO")}");
+            sb.AppendLine($"  Phones factory reset                 : {(onboarding.ConfirmedFactoryReset ? "YES" : "NO")}");
+            sb.AppendLine($"  Firmware updated                     : {(onboarding.ConfirmedFirmware ? "YES" : "NO")}");
             sb.AppendLine(divider);
 
             if (onboarding.PhoneCSV is { Count: > 0 })
@@ -1035,9 +1049,12 @@ public partial class MainWindow : Window
                   <div class="section"><span class="section-title">Customer Confirmations</span><div class="section-line"></div></div>
                   <table class="kv">
                 """);
-            sb.Append($"<tr><td>Former provider contacted</td><td>{Dot(onboarding.ConfirmedFormerProvider)}</td></tr>");
-            sb.Append($"<tr><td>SIP phones factory reset</td><td>{Dot(onboarding.ConfirmedFactoryReset)}</td></tr>");
-            sb.Append($"<tr><td>Firmware updated</td><td>{Dot(onboarding.ConfirmedFirmware)}</td></tr>");
+            sb.Append($"<tr><td>Brand new phones (not switching)</td><td>{Dot(onboarding.ConfirmedNewPhones)}</td></tr>");
+            sb.Append($"<tr><td>Old provider contacted</td><td>{Dot(onboarding.ConfirmedFormerProvider)}</td></tr>");
+            sb.Append($"<tr><td>Phones released by old provider</td><td>{Dot(onboarding.ConfirmedPhonesReleased)}</td></tr>");
+            sb.Append($"<tr><td>Setup passwords cleared/provided</td><td>{Dot(onboarding.ConfirmedProvisioningPasswords)}</td></tr>");
+            sb.Append($"<tr><td>Phones factory reset</td><td>{Dot(onboarding.ConfirmedFactoryReset)}</td></tr>");
+            sb.Append($"<tr><td>Software updated</td><td>{Dot(onboarding.ConfirmedFirmware)}</td></tr>");
             sb.Append("</table>");
 
             if (onboarding.PhoneCSV is { Count: > 0 })

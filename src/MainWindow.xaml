@@ -106,31 +106,36 @@
                                    Foreground="{StaticResource NavyBrush}"/>
                         <TextBlock Margin="0,8,0,0" TextWrapping="Wrap"
                                    Foreground="{StaticResource TextSecBrush}" FontSize="13" LineHeight="22">
-                            This tool checks your network against FieldPulse SIP requirements and
-                            prepares a report for the FieldPulse team.
+                            This tool makes sure your internet connection is ready for FieldPulse
+                            phone service. It runs a quick test and sends the results to your
+                            FieldPulse representative.
                             <LineBreak/><LineBreak/>
-                            Enter your company name above, then click  <Bold>Run Checks</Bold>  to begin.
+                            <Bold>Step 1:</Bold>  Type your company name above.
+                            <LineBreak/>
+                            <Bold>Step 2:</Bold>  Click  <Bold>Run Checks</Bold>.
+                            <LineBreak/>
+                            <Bold>Step 3:</Bold>  Click  <Bold>Send to FieldPulse</Bold>  when it finishes.
                         </TextBlock>
                         <StackPanel Orientation="Horizontal" Margin="0,16,0,0">
                             <Border Background="{StaticResource NavyTintBrush}"
                                     CornerRadius="4" Padding="10,5" Margin="0,0,8,0">
                                 <TextBlock Foreground="{StaticResource NavyBrush}"
                                            FontSize="11" FontWeight="SemiBold">
-                                    ✓  4 network checks
+                                    Takes about 30 seconds
                                 </TextBlock>
                             </Border>
                             <Border Background="{StaticResource NavyTintBrush}"
                                     CornerRadius="4" Padding="10,5" Margin="0,0,8,0">
                                 <TextBlock Foreground="{StaticResource NavyBrush}"
                                            FontSize="11" FontWeight="SemiBold">
-                                    ✓  Secure HTTPS submission
+                                    No technical knowledge needed
                                 </TextBlock>
                             </Border>
                             <Border Background="{StaticResource NavyTintBrush}"
                                     CornerRadius="4" Padding="10,5">
                                 <TextBlock Foreground="{StaticResource NavyBrush}"
                                            FontSize="11" FontWeight="SemiBold">
-                                    ✓  Signed report
+                                    Results sent to your FieldPulse rep
                                 </TextBlock>
                             </Border>
                         </StackPanel>

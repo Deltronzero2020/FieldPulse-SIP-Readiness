@@ -536,14 +536,25 @@ public partial class SubmissionDialog : Window
             errors.Add("At least one attendee is required.");
         }
 
-        // Confirmations
-        bool allChecked = chkFormerProvider.IsChecked == true &&
-                          chkFactoryReset.IsChecked   == true &&
-                          chkFirmware.IsChecked        == true;
-        if (!allChecked)
+        // Confirmations — either new phones OR provider-switch items must be checked
+        bool isNewPhones     = chkNewPhones.IsChecked == true;
+        bool providerChecked = chkFormerProvider.IsChecked == true &&
+                               chkPhonesReleased.IsChecked == true &&
+                               chkProvisioningPasswords.IsChecked == true;
+        bool prepChecked     = chkFactoryReset.IsChecked == true &&
+                               chkFirmware.IsChecked == true;
+
+        if (!isNewPhones && !providerChecked)
         {
             errConfirmations.Visibility = Visibility.Visible;
-            errors.Add("All three confirmation boxes must be checked.");
+            errConfirmations.Text = "Please check the 'new phones' box, or confirm all three items about switching from your old provider.";
+            errors.Add("Provider switch confirmations are required.");
+        }
+        if (!prepChecked)
+        {
+            errConfirmations.Visibility = Visibility.Visible;
+            errConfirmations.Text = "Please confirm the phone preparation items (factory reset and software update).";
+            errors.Add("Phone preparation confirmations are required.");
         }
 
         if (errors.Count > 0)
@@ -576,9 +587,12 @@ public partial class SubmissionDialog : Window
             ConfigNotes             = txtConfigNotes.Text.Trim(),
             PreferredTime           = preferredTime,
             Attendees               = string.Join("; ", _attendees.Select(a => $"{a.Name} <{a.Email}>")),
-            ConfirmedFormerProvider = chkFormerProvider.IsChecked == true,
-            ConfirmedFactoryReset   = chkFactoryReset.IsChecked   == true,
-            ConfirmedFirmware       = chkFirmware.IsChecked        == true,
+            ConfirmedNewPhones              = chkNewPhones.IsChecked == true,
+            ConfirmedFormerProvider         = chkFormerProvider.IsChecked == true,
+            ConfirmedPhonesReleased         = chkPhonesReleased.IsChecked == true,
+            ConfirmedProvisioningPasswords  = chkProvisioningPasswords.IsChecked == true,
+            ConfirmedFactoryReset           = chkFactoryReset.IsChecked == true,
+            ConfirmedFirmware               = chkFirmware.IsChecked == true,
             PhoneCSV                = _csvPhones,
         };
 
