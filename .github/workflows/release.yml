@@ -104,20 +104,21 @@ jobs:
           body: |
             ## FieldPulse SIP Readiness Check ${{ github.ref_name }}
 
-            ### Download
-            Download `FieldPulse-SIP-Readiness-${{ github.ref_name }}.zip`, extract, and run the EXE.
+            ### Quick Download (EXE only)
+            **[FieldPulse-SIP-Readiness.exe](https://github.com/Deltronzero2020/FieldPulse-SIP-Readiness/releases/download/${{ github.ref_name }}/FieldPulse-SIP-Readiness.exe)** — Just download and run!
 
-            ### What's Included
-            - `FieldPulse-SIP-Readiness.exe` — Single-file application (no install needed)
+            ### Full Package (with guides)
+            Download the ZIP for documentation:
             - `USER-GUIDE.md` — Step-by-step guide for end users
             - `IT-ADMIN-GUIDE.md` — Firewall/network requirements for IT teams
-            - `README.txt` — Quick start instructions
 
             ### Requirements
             - Windows 10 or Windows 11 (x64)
             - Internet connection
             - No administrator rights required
-          files: FieldPulse-SIP-Readiness-${{ github.ref_name }}.zip
+          files: |
+            Deploy/FieldPulse-SIP-Readiness.exe
+            FieldPulse-SIP-Readiness-${{ github.ref_name }}.zip
           draft: false
           prerelease: false
         env:
