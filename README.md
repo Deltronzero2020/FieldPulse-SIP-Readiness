@@ -15,48 +15,72 @@ A Windows diagnostic tool for verifying network readiness before SIP phone onboa
 
 | Component | Description |
 |-----------|-------------|
-| `FieldPulse-SIP-Readiness.ps1` | PowerShell GUI application (WinForms) |
-| `WPF/` | .NET 9 WPF desktop application (alternative) |
+| `WPF/` | .NET 9 WPF desktop application (recommended) |
+| `FieldPulse-SIP-Readiness.ps1` | PowerShell GUI application (alternative) |
 | `FieldPulse-SIP-Readiness-Backend.gs` | Google Apps Script webhook receiver |
-| `Sign-Script.ps1` | Code signing utility for EXE distribution |
-| `FieldPulse-SIP-Readiness.bat` | Windows batch launcher |
+| `Build-Deployment.ps1` | Creates clean deployment folder |
+| `IT-ADMIN-GUIDE.md` | Firewall/AV guide for IT administrators |
+| `Sign-Script.ps1` | Code signing utility |
 
-## Quick Start
+## Customer Deployment
 
-### Option 1: PowerShell Script
+### Build a Clean Deployment Folder
+
 ```powershell
-# Right-click > Run with PowerShell (as Administrator)
+# Run from the repo root (on Windows with .NET SDK installed)
+.\Build-Deployment.ps1
+
+# With code signing (eliminates SmartScreen warning)
+.\Build-Deployment.ps1 -SignCert "YOUR_CERT_THUMBPRINT"
+```
+
+This creates a `Deploy/` folder containing:
+
+```
+Deploy/
+  FieldPulse-SIP-Readiness.exe   <- Single-file EXE (no install needed)
+  README.txt                      <- Quick start for end users
+  IT-ADMIN-GUIDE.md               <- Firewall/AV guide for IT teams
+```
+
+### Distribute to Customers
+
+1. **Zip the Deploy folder** and send to customers
+2. **Or** place on a network share for direct access
+3. **Or** deploy via SCCM/Intune as a portable app
+
+### End User Instructions
+
+1. Extract the zip (or run from network share)
+2. Double-click `FieldPulse-SIP-Readiness.exe`
+3. If SmartScreen appears: click "More info" → "Run anyway"
+4. Enter company name → Click "Run Checks"
+5. Review results → Click "Send to FieldPulse"
+
+---
+
+## Development
+
+### Quick Start (Development)
+
+```powershell
+# Run the WPF app directly
+cd WPF
+dotnet run
+
+# Or run the PowerShell version
 .\FieldPulse-SIP-Readiness.ps1
 ```
 
-### Option 2: Batch Launcher
-```cmd
-# Double-click or run from command prompt
-FieldPulse-SIP-Readiness.bat
-```
+### Build Commands
 
-### Option 3: WPF Application
 ```powershell
+# WPF - Debug build
 cd WPF
-dotnet run
-```
+dotnet build
 
-## Building
-
-### PowerShell to EXE (Signed)
-```powershell
-# Self-signed certificate (free, SmartScreen warning)
-.\Sign-Script.ps1 -SelfSigned
-
-# Commercial certificate (no warning)
-.\Sign-Script.ps1 -Thumbprint "YOUR_CERT_THUMBPRINT"
-```
-
-### WPF Application
-```powershell
-cd WPF
-dotnet build -c Release
-dotnet publish -c Release -r win-x64 --self-contained
+# WPF - Release build (single-file EXE)
+dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true
 ```
 
 ## Backend Setup
@@ -92,6 +116,26 @@ The tool tests connectivity to:
 | SIP | 54.172.60.0-3, 54.244.51.0-3 | 5060, 5061 |
 | RTP | 168.86.128.0/18 | 10000-20000 (UDP) |
 
+## IT Administrator Notes
+
+For enterprise deployments, see **[IT-ADMIN-GUIDE.md](IT-ADMIN-GUIDE.md)** which covers:
+
+- Firewall rules for FieldPulse IPs
+- Antivirus exclusion recommendations
+- SmartScreen and code signing
+- Data privacy and what's collected
+
+### Quick Firewall Summary
+
+| Destination | Ports | Protocol |
+|-------------|-------|----------|
+| FieldPulse HTTP IPs | 80, 443 | TCP |
+| FieldPulse SIP IPs | 5060, 5061 | TCP |
+| script.google.com | 443 | TCP |
+| ICMP (optional) | - | ICMP Echo |
+
+---
+
 ## Security
 
 - HMAC-SHA256 request signing
@@ -102,6 +146,8 @@ The tool tests connectivity to:
 - Constant-time HMAC comparison
 
 See [SECURITY-REVIEW-SUMMARY.md](SECURITY-REVIEW-SUMMARY.md) for full security audit.
+
+---
 
 ## License
 
