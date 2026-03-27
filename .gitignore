@@ -1,0 +1,37 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Build outputs
+*.exe
+*.pdb
+*.dll
+bin/
+obj/
+publish/
+
+# IDE
+.vs/
+.vscode/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Logs
+*.log
+error.log
+
+# Certificates (never commit)
+*.pfx
+*.p12
+*.cer
+
+# Local config overrides
+appsettings.local.json
