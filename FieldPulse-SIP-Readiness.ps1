@@ -44,7 +44,7 @@ $RTP_SAMPLE_IPS = @('168.86.128.1','168.86.150.1','168.86.191.1')
 # TIMEOUTS & LIMITS
 # -------------------------------------------------------------
 $TCP_PROBE_TIMEOUT_MS   = 1500    # Timeout for parallel TCP connectivity probes
-$HTTP_REQUEST_TIMEOUT_S = 20      # Timeout for webhook HTTP request
+$HTTP_REQUEST_TIMEOUT_S = 30      # Timeout for webhook HTTP request
 $PING_COUNT             = 5       # Number of ICMP pings for latency test
 $PING_TIMEOUT_MS        = 2000    # Timeout per ping
 $MAX_LATENCY_GOOD_MS    = 100     # RTT threshold for PASS

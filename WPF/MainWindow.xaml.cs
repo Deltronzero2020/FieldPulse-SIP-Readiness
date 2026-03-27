@@ -23,7 +23,7 @@ public partial class MainWindow : Window
 
     // ── Timeouts & Limits ─────────────────────────────────────────
     private const int TcpProbeTimeoutMs   = 1500;   // Timeout for TCP connectivity probes
-    private const int HttpRequestTimeoutS = 20;     // Timeout for webhook HTTP request
+    private const int HttpRequestTimeoutS = 30;     // Timeout for webhook HTTP request
     private const int PingCount           = 5;      // Number of ICMP pings for latency test
     private const int PingTimeoutMs       = 2000;   // Timeout per ping
     private const int MaxLatencyGoodMs    = 100;    // RTT threshold for PASS
@@ -66,7 +66,7 @@ public partial class MainWindow : Window
     private bool    _checksRan = false;
     private OnboardingData? _lastOnboarding;
     private Dictionary<string, bool> _tcpCache = [];
-    private static readonly HttpClient Http = new() { Timeout = TimeSpan.FromSeconds(10) };
+    private static readonly HttpClient Http = new() { Timeout = TimeSpan.FromSeconds(30) };
 
     // ── IsManualActionVisible property (bound to summary panel) ───
     public bool IsManualActionVisible { get; set; } = true;
