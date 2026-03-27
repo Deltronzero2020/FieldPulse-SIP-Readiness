@@ -19,6 +19,7 @@ A Windows diagnostic tool for verifying network readiness before SIP phone onboa
 | `FieldPulse-SIP-Readiness.ps1` | PowerShell GUI application (alternative) |
 | `FieldPulse-SIP-Readiness-Backend.gs` | Google Apps Script webhook receiver |
 | `Build-Deployment.ps1` | Creates clean deployment folder |
+| `USER-GUIDE.md` | Non-technical guide for end users |
 | `IT-ADMIN-GUIDE.md` | Firewall/AV guide for IT administrators |
 | `Sign-Script.ps1` | Code signing utility |
 
@@ -39,7 +40,8 @@ This creates a `Deploy/` folder containing:
 ```
 Deploy/
   FieldPulse-SIP-Readiness.exe   <- Single-file EXE (no install needed)
-  README.txt                      <- Quick start for end users
+  README.txt                      <- Quick start (1 page)
+  USER-GUIDE.md                   <- Full guide for non-technical users
   IT-ADMIN-GUIDE.md               <- Firewall/AV guide for IT teams
 ```
 

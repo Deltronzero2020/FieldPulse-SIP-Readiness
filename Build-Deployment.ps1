@@ -35,21 +35,21 @@ Write-Host "========================================`n" -ForegroundColor Cyan
 
 # Step 1: Clean output folder
 if (Test-Path $OutputPath) {
-    Write-Host "[1/5] Cleaning existing deployment folder..." -ForegroundColor Yellow
+    Write-Host "[1/6] Cleaning existing deployment folder..." -ForegroundColor Yellow
     Remove-Item -Path $OutputPath -Recurse -Force
 }
 New-Item -Path $OutputPath -ItemType Directory -Force | Out-Null
-Write-Host "[1/5] Created deployment folder: $OutputPath" -ForegroundColor Green
+Write-Host "[1/6] Created deployment folder: $OutputPath" -ForegroundColor Green
 
 # Step 2: Build the WPF application
-Write-Host "[2/5] Building WPF application (Release, self-contained)..." -ForegroundColor Yellow
+Write-Host "[2/6] Building WPF application (Release, self-contained)..." -ForegroundColor Yellow
 Push-Location ".\WPF"
 try {
     dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o "..\$OutputPath" 2>&1 | Out-Null
     if ($LASTEXITCODE -ne 0) {
         throw "dotnet publish failed with exit code $LASTEXITCODE"
     }
-    Write-Host "[2/5] Build completed successfully." -ForegroundColor Green
+    Write-Host "[2/6] Build completed successfully." -ForegroundColor Green
 } finally {
     Pop-Location
 }
@@ -57,7 +57,7 @@ try {
 # Step 3: Code sign (optional)
 $exePath = Join-Path $OutputPath "FieldPulse-SIP-Readiness.exe"
 if ($SignCert) {
-    Write-Host "[3/5] Signing executable with certificate $SignCert..." -ForegroundColor Yellow
+    Write-Host "[3/6] Signing executable with certificate $SignCert..." -ForegroundColor Yellow
     try {
         $cert = Get-ChildItem -Path Cert:\CurrentUser\My -CodeSigningCert | Where-Object { $_.Thumbprint -eq $SignCert }
         if (-not $cert) {
@@ -67,17 +67,17 @@ if ($SignCert) {
             throw "Certificate with thumbprint $SignCert not found."
         }
         Set-AuthenticodeSignature -FilePath $exePath -Certificate $cert -TimestampServer "http://timestamp.digicert.com" | Out-Null
-        Write-Host "[3/5] Code signing completed." -ForegroundColor Green
+        Write-Host "[3/6] Code signing completed." -ForegroundColor Green
     } catch {
-        Write-Host "[3/5] Code signing failed: $_" -ForegroundColor Red
+        Write-Host "[3/6] Code signing failed: $_" -ForegroundColor Red
         Write-Host "       Continuing with unsigned EXE." -ForegroundColor Yellow
     }
 } else {
-    Write-Host "[3/5] Skipping code signing (no certificate provided)." -ForegroundColor Gray
+    Write-Host "[3/6] Skipping code signing (no certificate provided)." -ForegroundColor Gray
 }
 
 # Step 4: Create README.txt
-Write-Host "[4/5] Creating README.txt..." -ForegroundColor Yellow
+Write-Host "[4/6] Creating README.txt..." -ForegroundColor Yellow
 $readmeContent = @"
 ================================================================================
   FIELDPULSE SIP READINESS CHECK
@@ -123,12 +123,16 @@ For IT administrators, see IT-ADMIN-GUIDE.md for firewall and AV details.
 ================================================================================
 "@
 $readmeContent | Out-File -FilePath (Join-Path $OutputPath "README.txt") -Encoding UTF8
-Write-Host "[4/5] README.txt created." -ForegroundColor Green
+Write-Host "[4/6] README.txt created." -ForegroundColor Green
 
-# Step 5: Copy IT Admin Guide
-Write-Host "[5/5] Copying IT Admin Guide..." -ForegroundColor Yellow
+# Step 5: Copy documentation
+Write-Host "[5/6] Copying User Guide..." -ForegroundColor Yellow
+Copy-Item -Path ".\USER-GUIDE.md" -Destination (Join-Path $OutputPath "USER-GUIDE.md") -Force
+Write-Host "[5/6] USER-GUIDE.md copied." -ForegroundColor Green
+
+Write-Host "[6/6] Copying IT Admin Guide..." -ForegroundColor Yellow
 Copy-Item -Path ".\IT-ADMIN-GUIDE.md" -Destination $OutputPath -Force
-Write-Host "[5/5] IT-ADMIN-GUIDE.md copied." -ForegroundColor Green
+Write-Host "[6/6] IT-ADMIN-GUIDE.md copied." -ForegroundColor Green
 
 # Summary
 Write-Host "`n========================================" -ForegroundColor Cyan
