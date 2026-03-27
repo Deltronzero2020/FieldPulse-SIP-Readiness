@@ -412,21 +412,34 @@ $btnRun.Add_Click({
 
     Append-ResultBox $rtbResults '[i]' "Local IP" "$($script:localIP)   Gateway: $($script:gateway)   Public IP: $($script:publicIP)" 'INFO'
 
-    # -- Start latency tests in background (parallel with TCP checks) --
-    $latencyJobs = @()
+    # -- Start latency tests in background using runspaces (faster than Start-Job) --
+    $latencyRunspaces = @()
     $latencyTargets = @()
     if ($script:gateway) {
         $latencyTargets += @{ Target = $script:gateway; Label = 'Gateway' }
     }
     $latencyTargets += @{ Target = $SIP_IPS[0]; Label = 'FieldPulse SIP' }
 
+    $runspacePool = [runspacefactory]::CreateRunspacePool(1, $latencyTargets.Count)
+    $runspacePool.Open()
+
     foreach ($t in $latencyTargets) {
-        $job = Start-Job -ScriptBlock {
+        $ps = [powershell]::Create()
+        $ps.RunspacePool = $runspacePool
+        [void]$ps.AddScript({
             param($Target, $Label, $PingCount)
             try {
-                $pings = Test-Connection -ComputerName $Target -Count $PingCount -ErrorAction SilentlyContinue
-                $rtts  = @($pings | Where-Object { $_ -and $_.ResponseTime -gt 0 } |
-                           ForEach-Object { $_.ResponseTime })
+                $ping = New-Object System.Net.NetworkInformation.Ping
+                $rtts = @()
+                for ($i = 0; $i -lt $PingCount; $i++) {
+                    try {
+                        $reply = $ping.Send($Target, 2000)
+                        if ($reply.Status -eq 'Success') {
+                            $rtts += $reply.RoundtripTime
+                        }
+                    } catch { }
+                }
+                $ping.Dispose()
                 if ($rtts.Count -lt 3) {
                     return @{ Label = $Label; Status = 'WARN'; Avg = $null; Jitter = $null; Lost = $PingCount - $rtts.Count; Error = 'Inconclusive' }
                 }
@@ -437,8 +450,9 @@ $btnRun.Add_Click({
             } catch {
                 return @{ Label = $Label; Status = 'ERROR'; Avg = $null; Jitter = $null; Lost = $PingCount; Error = $_.Exception.Message }
             }
-        } -ArgumentList $t.Target, $t.Label, $PING_COUNT
-        $latencyJobs += $job
+        }).AddArgument($t.Target).AddArgument($t.Label).AddArgument($PING_COUNT)
+        $handle = $ps.BeginInvoke()
+        $latencyRunspaces += @{ PS = $ps; Handle = $handle; Label = $t.Label }
     }
 
     # -- CHECK 2  -  IP Connectivity -----------------------------
@@ -546,20 +560,31 @@ $btnRun.Add_Click({
         Append-ResultBox $rtbResults '[X]' "One or more IPs blocked" "Update your router/firewall  -  see checklist for IP list" 'FAIL'
     }
 
-    # -- CHECK 2b  -  Latency & Jitter (collect parallel job results) --
+    # -- CHECK 2b  -  Latency & Jitter (collect parallel runspace results) --
     Set-Status $lblStatus $progressBar 'Collecting latency and jitter results...' 52
     Write-Section "2b. LATENCY & JITTER"
 
-    # Wait for background latency jobs to complete (max 15 seconds)
-    $latencyJobs | Wait-Job -Timeout 15 | Out-Null
+    # Wait for runspaces to complete (max 15 seconds)
+    $timeout = [datetime]::Now.AddSeconds(15)
+    foreach ($rs in $latencyRunspaces) {
+        $remaining = ($timeout - [datetime]::Now).TotalMilliseconds
+        if ($remaining -gt 0) {
+            [void]$rs.Handle.AsyncWaitHandle.WaitOne([int]$remaining)
+        }
+    }
 
-    foreach ($job in $latencyJobs) {
-        $result = Receive-Job -Job $job -ErrorAction SilentlyContinue
-        Remove-Job -Job $job -Force -ErrorAction SilentlyContinue
+    foreach ($rs in $latencyRunspaces) {
+        $result = $null
+        try {
+            if ($rs.Handle.IsCompleted) {
+                $result = $rs.PS.EndInvoke($rs.Handle)
+            }
+        } catch { }
+        $rs.PS.Dispose()
 
         if (-not $result) {
-            Append-ResultBox $rtbResults '[!]' "Latency test timed out" "Test took too long  -  network may be congested" 'WARN'
-            Add-ResultRow '[!]' "Latency test" "Timed out" 'WARN'
+            Append-ResultBox $rtbResults '[!]' "Latency test timed out  -  $($rs.Label)" "Test took too long  -  network may be congested" 'WARN'
+            Add-ResultRow '[!]' "Latency ($($rs.Label))" "Timed out" 'WARN'
             continue
         }
 
@@ -587,6 +612,10 @@ $btnRun.Add_Click({
         }
         $script:reportLines.Add("Latency $label : $detail")
     }
+
+    # Cleanup runspace pool
+    $runspacePool.Close()
+    $runspacePool.Dispose()
 
     # -- CHECK 3  -  Router & Gateway Configuration --------------
     Set-Status $lblStatus $progressBar 'Detecting router and testing gateway configuration...' 55
