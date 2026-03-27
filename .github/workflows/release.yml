@@ -58,7 +58,32 @@ jobs:
           cd WPF
           dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o ../Deploy
 
-      - name: Add documentation to Deploy folder
+      - name: Install wkhtmltopdf for PDF generation
+        run: choco install wkhtmltopdf -y --no-progress
+        shell: pwsh
+
+      - name: Convert documentation to PDF
+        run: |
+          # Add wkhtmltopdf to PATH
+          $env:PATH += ";C:\Program Files\wkhtmltopdf\bin"
+
+          # Convert USER-GUIDE.md to PDF
+          pandoc USER-GUIDE.md -o Deploy/USER-GUIDE.pdf `
+            --pdf-engine=wkhtmltopdf `
+            --metadata title="FieldPulse SIP Readiness - User Guide" `
+            -V margin-top=20mm -V margin-bottom=20mm -V margin-left=20mm -V margin-right=20mm
+
+          # Convert IT-ADMIN-GUIDE.md to PDF
+          pandoc IT-ADMIN-GUIDE.md -o Deploy/IT-ADMIN-GUIDE.pdf `
+            --pdf-engine=wkhtmltopdf `
+            --metadata title="FieldPulse SIP Readiness - IT Admin Guide" `
+            -V margin-top=20mm -V margin-bottom=20mm -V margin-left=20mm -V margin-right=20mm
+
+          Write-Host "PDFs generated successfully"
+          Get-ChildItem Deploy/*.pdf
+        shell: pwsh
+
+      - name: Add markdown documentation to Deploy folder
         run: |
           Copy-Item USER-GUIDE.md Deploy/
           Copy-Item IT-ADMIN-GUIDE.md Deploy/
@@ -82,8 +107,10 @@ jobs:
 
           DOCUMENTATION
           -------------
-          - USER-GUIDE.md      Full guide for end users (non-technical)
-          - IT-ADMIN-GUIDE.md  Firewall and network requirements for IT teams
+          - USER-GUIDE.pdf       Full guide for end users (non-technical)
+          - IT-ADMIN-GUIDE.pdf   Firewall and network requirements for IT teams
+
+          TIP: Click the "? Help" button in the app to access documentation online.
 
           NEED HELP?
           ----------
@@ -104,20 +131,28 @@ jobs:
           body: |
             ## FieldPulse SIP Readiness Check ${{ github.ref_name }}
 
-            ### Quick Download (EXE only)
-            **[FieldPulse-SIP-Readiness.exe](https://github.com/Deltronzero2020/FieldPulse-SIP-Readiness/releases/download/${{ github.ref_name }}/FieldPulse-SIP-Readiness.exe)** — Just download and run!
+            ### Quick Download
+            | File | Description |
+            |------|-------------|
+            | **[FieldPulse-SIP-Readiness.exe](https://github.com/Deltronzero2020/FieldPulse-SIP-Readiness/releases/download/${{ github.ref_name }}/FieldPulse-SIP-Readiness.exe)** | Application — just download and run! |
+            | **[USER-GUIDE.pdf](https://github.com/Deltronzero2020/FieldPulse-SIP-Readiness/releases/download/${{ github.ref_name }}/USER-GUIDE.pdf)** | Step-by-step guide for end users |
+            | **[IT-ADMIN-GUIDE.pdf](https://github.com/Deltronzero2020/FieldPulse-SIP-Readiness/releases/download/${{ github.ref_name }}/IT-ADMIN-GUIDE.pdf)** | Firewall/network requirements for IT teams |
 
-            ### Full Package (with guides)
-            Download the ZIP for documentation:
-            - `USER-GUIDE.md` — Step-by-step guide for end users
-            - `IT-ADMIN-GUIDE.md` — Firewall/network requirements for IT teams
+            ### Full Package
+            Download **[FieldPulse-SIP-Readiness-${{ github.ref_name }}.zip](https://github.com/Deltronzero2020/FieldPulse-SIP-Readiness/releases/download/${{ github.ref_name }}/FieldPulse-SIP-Readiness-${{ github.ref_name }}.zip)** for everything bundled together.
 
             ### Requirements
             - Windows 10 or Windows 11 (x64)
             - Internet connection
             - No administrator rights required
+
+            ### What's New
+            - Added Help button in app to access documentation
+            - PDF documentation for easier reading
           files: |
             Deploy/FieldPulse-SIP-Readiness.exe
+            Deploy/USER-GUIDE.pdf
+            Deploy/IT-ADMIN-GUIDE.pdf
             FieldPulse-SIP-Readiness-${{ github.ref_name }}.zip
           draft: false
           prerelease: false

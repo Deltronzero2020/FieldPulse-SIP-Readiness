@@ -705,6 +705,25 @@ public partial class MainWindow : Window
 
     private void BtnClose_Click(object sender, RoutedEventArgs e) => Close();
 
+    private void BtnHelp_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            // Open online documentation (always up-to-date)
+            var psi = new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = "https://github.com/Deltronzero2020/FieldPulse-SIP-Readiness/releases/latest",
+                UseShellExecute = true
+            };
+            System.Diagnostics.Process.Start(psi);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Could not open help documentation.\n\n{ex.Message}",
+                "Help", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+    }
+
     // ── Report builder ─────────────────────────────────────────────
     private string BuildReport(OnboardingData? onboarding = null)
     {

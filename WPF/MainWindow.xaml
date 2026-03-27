@@ -224,10 +224,20 @@
                         Style="{StaticResource SecondaryButton}"
                         Content="Close"
                         Width="90" Margin="10,0,0,0"
-                        HorizontalAlignment="Right"
                         Click="BtnClose_Click"
                         AutomationProperties.Name="Close application"
                         AutomationProperties.HelpText="Exit the SIP Readiness Check application"/>
+
+                <!-- Spacer to push Help to right -->
+                <Border Width="1" Margin="20,0,0,0"/>
+
+                <Button x:Name="btnHelp"
+                        Style="{StaticResource SecondaryButton}"
+                        Content="?   Help"
+                        Width="90"
+                        Click="BtnHelp_Click"
+                        AutomationProperties.Name="Open help documentation"
+                        AutomationProperties.HelpText="View the user guide and IT admin documentation"/>
             </StackPanel>
         </Border>
 
