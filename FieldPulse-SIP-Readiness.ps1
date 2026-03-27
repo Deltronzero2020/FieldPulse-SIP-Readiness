@@ -25,7 +25,7 @@ Set-StrictMode -Version Latest
 # Never commit the real secret to version control.
 # -------------------------------------------------------------
 # Google Apps Script Web App URL (already deployed).
-$WEBHOOK_URL    = "https://script.google.com/macros/s/AKfycbxJkyq08JDa2m74AU7wzWeP66n8SPyV-NAMgazGnGVkJSSVkerhj1Wqf_dsoaJNHTpX/exec"
+$WEBHOOK_URL    = "https://script.google.com/macros/s/AKfycbxkdlHHYVQ67m8XxvWdCfn9Y2TuwBlwzXqPuXcL8nGQ0jMC0JGEmydSglYt4btCbmxl/exec"
 
 # Shared HMAC secret — must match WEBHOOK_SECRET in the Apps Script backend.
 # IMPORTANT: Replace 'REPLACE_WITH_YOUR_SECRET' with your actual UUID before signing.

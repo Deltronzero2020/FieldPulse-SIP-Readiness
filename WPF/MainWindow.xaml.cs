@@ -18,7 +18,7 @@ public partial class MainWindow : Window
 {
     // ── Webhook config ─────────────────────────────────────────────
     // SECURITY: For production, consider loading from app.config or environment
-    private const string WebhookUrl    = "https://script.google.com/macros/s/AKfycbxJkyq08JDa2m74AU7wzWeP66n8SPyV-NAMgazGnGVkJSSVkerhj1Wqf_dsoaJNHTpX/exec";
+    private const string WebhookUrl    = "https://script.google.com/macros/s/AKfycbxkdlHHYVQ67m8XxvWdCfn9Y2TuwBlwzXqPuXcL8nGQ0jMC0JGEmydSglYt4btCbmxl/exec";
     private const string WebhookSecret = "b9998be9-a908-435e-a4a5-51ff793eb71b";
 
     // ── Timeouts & Limits ─────────────────────────────────────────
