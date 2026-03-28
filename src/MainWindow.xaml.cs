@@ -597,7 +597,6 @@ public partial class MainWindow : Window
             ["preferred_time"]            = onboarding.PreferredTime,
             ["attendees"]                 = onboarding.Attendees,
             ["confirmed_new_phones"]              = onboarding.ConfirmedNewPhones,
-            ["confirmed_former_provider"]         = onboarding.ConfirmedFormerProvider,
             ["confirmed_phones_released"]         = onboarding.ConfirmedPhonesReleased,
             ["confirmed_provisioning_passwords"]  = onboarding.ConfirmedProvisioningPasswords,
             ["confirmed_factory_reset"]           = onboarding.ConfirmedFactoryReset,
@@ -804,8 +803,7 @@ public partial class MainWindow : Window
             sb.AppendLine(sub);
             sb.AppendLine("  CUSTOMER CONFIRMATIONS");
             sb.AppendLine($"  Brand new phones (no prev. provider) : {(onboarding.ConfirmedNewPhones ? "YES" : "NO")}");
-            sb.AppendLine($"  Former provider contacted            : {(onboarding.ConfirmedFormerProvider ? "YES" : "NO")}");
-            sb.AppendLine($"  Phones released by prev. provider    : {(onboarding.ConfirmedPhonesReleased ? "YES" : "NO")}");
+            sb.AppendLine($"  Phones released from auto-prov.      : {(onboarding.ConfirmedPhonesReleased ? "YES" : "NO")}");
             sb.AppendLine($"  Provisioning passwords cleared       : {(onboarding.ConfirmedProvisioningPasswords ? "YES" : "NO")}");
             sb.AppendLine($"  Phones factory reset                 : {(onboarding.ConfirmedFactoryReset ? "YES" : "NO")}");
             sb.AppendLine($"  Firmware updated                     : {(onboarding.ConfirmedFirmware ? "YES" : "NO")}");
@@ -1049,8 +1047,7 @@ public partial class MainWindow : Window
                   <table class="kv">
                 """);
             sb.Append($"<tr><td>Brand new phones (not switching)</td><td>{Dot(onboarding.ConfirmedNewPhones)}</td></tr>");
-            sb.Append($"<tr><td>Old provider contacted</td><td>{Dot(onboarding.ConfirmedFormerProvider)}</td></tr>");
-            sb.Append($"<tr><td>Phones released by old provider</td><td>{Dot(onboarding.ConfirmedPhonesReleased)}</td></tr>");
+            sb.Append($"<tr><td>Phones released from auto-provisioning</td><td>{Dot(onboarding.ConfirmedPhonesReleased)}</td></tr>");
             sb.Append($"<tr><td>Setup passwords cleared/provided</td><td>{Dot(onboarding.ConfirmedProvisioningPasswords)}</td></tr>");
             sb.Append($"<tr><td>Phones factory reset</td><td>{Dot(onboarding.ConfirmedFactoryReset)}</td></tr>");
             sb.Append($"<tr><td>Software updated</td><td>{Dot(onboarding.ConfirmedFirmware)}</td></tr>");

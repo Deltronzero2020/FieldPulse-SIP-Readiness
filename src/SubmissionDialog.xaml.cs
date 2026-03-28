@@ -538,8 +538,7 @@ public partial class SubmissionDialog : Window
 
         // Confirmations — either new phones OR provider-switch items must be checked
         bool isNewPhones     = chkNewPhones.IsChecked == true;
-        bool providerChecked = chkFormerProvider.IsChecked == true &&
-                               chkPhonesReleased.IsChecked == true &&
+        bool providerChecked = chkPhonesReleased.IsChecked == true &&
                                chkProvisioningPasswords.IsChecked == true;
         bool prepChecked     = chkFactoryReset.IsChecked == true &&
                                chkFirmware.IsChecked == true;
@@ -547,7 +546,7 @@ public partial class SubmissionDialog : Window
         if (!isNewPhones && !providerChecked)
         {
             errConfirmations.Visibility = Visibility.Visible;
-            errConfirmations.Text = "Please check the 'new phones' box, or confirm all three items about switching from your old provider.";
+            errConfirmations.Text = "Please check the 'new phones' box, or confirm that your phones have been released from auto-provisioning and that you have the admin password.";
             errors.Add("Provider switch confirmations are required.");
         }
         if (!prepChecked)
@@ -588,7 +587,6 @@ public partial class SubmissionDialog : Window
             PreferredTime           = preferredTime,
             Attendees               = string.Join("; ", _attendees.Select(a => $"{a.Name} <{a.Email}>")),
             ConfirmedNewPhones              = chkNewPhones.IsChecked == true,
-            ConfirmedFormerProvider         = chkFormerProvider.IsChecked == true,
             ConfirmedPhonesReleased         = chkPhonesReleased.IsChecked == true,
             ConfirmedProvisioningPasswords  = chkProvisioningPasswords.IsChecked == true,
             ConfirmedFactoryReset           = chkFactoryReset.IsChecked == true,

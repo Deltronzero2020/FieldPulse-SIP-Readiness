@@ -48,7 +48,7 @@
                         VerticalAlignment="Center"
                         Background="#FFFFFF18" CornerRadius="4"
                         Padding="10,4">
-                    <TextBlock Text="v2.0" Foreground="#AABBDD"
+                    <TextBlock Text="v2.2" Foreground="#AABBDD"
                                FontSize="11" FontFamily="Consolas"/>
                 </Border>
             </Grid>
@@ -236,7 +236,7 @@
                     <Button x:Name="btnUserGuide"
                             Style="{StaticResource SecondaryButton}"
                             Click="BtnUserGuide_Click"
-                            Width="130"
+                            Width="130" Padding="10,0"
                             AutomationProperties.Name="Open user guide">
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="&#x2753;" FontSize="12" VerticalAlignment="Center" Margin="0,0,6,0"/>
@@ -247,7 +247,7 @@
                     <Button x:Name="btnITGuide"
                             Style="{StaticResource SecondaryButton}"
                             Click="BtnITGuide_Click"
-                            Width="150" Margin="8,0,0,0"
+                            Width="150" Margin="8,0,0,0" Padding="10,0"
                             AutomationProperties.Name="Open IT admin guide">
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="&#x1F6E0;" FontSize="12" VerticalAlignment="Center" Margin="0,0,6,0"/>
@@ -258,7 +258,7 @@
                     <Button x:Name="btnClose"
                             Style="{StaticResource SecondaryButton}"
                             Content="Close"
-                            Width="80" Margin="8,0,0,0"
+                            Width="80" Margin="8,0,0,0" Padding="10,0"
                             Click="BtnClose_Click"
                             AutomationProperties.Name="Close application"/>
                 </StackPanel>

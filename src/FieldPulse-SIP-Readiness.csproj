@@ -10,7 +10,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>Assets\FP_Icon.ico</ApplicationIcon>
-    <Version>2.1.0</Version>
+    <Version>2.2.0</Version>
     <Company>FieldPulse</Company>
     <Product>FieldPulse SIP Readiness Check</Product>
     <Description>SIP Phone Registration Readiness Check</Description>

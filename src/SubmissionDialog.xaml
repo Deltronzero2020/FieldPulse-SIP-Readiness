@@ -488,48 +488,25 @@
                                     <StackPanel>
                                         <TextBlock Text="These are brand new phones — I'm not switching from another phone company."
                                                    TextWrapping="Wrap" FontSize="12" FontWeight="SemiBold"/>
-                                        <TextBlock Text="Check this if you bought new phones and don't have a previous phone provider. Skip the next three items."
+                                        <TextBlock Text="Check this if you bought new phones and don't have a previous phone provider. Skip the next two items."
                                                    TextWrapping="Wrap" FontSize="10.5" Foreground="#8C959F" Margin="0,3,0,0"/>
                                     </StackPanel>
                                 </CheckBox>
 
                                 <Rectangle Height="1" Fill="{StaticResource BorderBrush}" Margin="0,0,0,14"/>
 
-                                <!-- Former provider contacted -->
-                                <CheckBox x:Name="chkFormerProvider"
-                                          FontSize="12" Foreground="{StaticResource TextPrimaryBrush}"
-                                          Margin="0,0,0,4"
-                                          AutomationProperties.Name="Former provider confirmation">
-                                    <StackPanel>
-                                        <TextBlock Text="I've contacted my old phone company about switching to FieldPulse."
-                                                   TextWrapping="Wrap" FontSize="12" FontWeight="SemiBold"/>
-                                        <TextBlock Text="This includes letting them know you're moving your phone service. If you want to keep your current phone numbers, tell them you'll be 'porting' your numbers to a new provider."
-                                                   TextWrapping="Wrap" FontSize="10.5" Foreground="#8C959F" Margin="0,3,0,0"/>
-                                    </StackPanel>
-                                </CheckBox>
-                                <Expander Header="  What does my IT team need to know?" Margin="24,2,0,14"
-                                          FontSize="10.5" Foreground="#0550AE" IsExpanded="False">
-                                    <TextBlock TextWrapping="Wrap" FontSize="10.5" Foreground="#57606A" Margin="4,4,0,4">
-                                        Initiate number porting (LNP) or cancellation with the previous carrier.
-                                        Obtain the account number, PIN, and authorized contact name needed for
-                                        the port request. FieldPulse will coordinate the port date once the
-                                        LOA (Letter of Authorization) is signed.
-                                    </TextBlock>
-                                </Expander>
-
-                                <!-- Phones released -->
+                                <!-- Phones released from auto-provisioning -->
                                 <CheckBox x:Name="chkPhonesReleased"
                                           FontSize="12" Foreground="{StaticResource TextPrimaryBrush}"
                                           Margin="0,0,0,4"
                                           AutomationProperties.Name="Phones released confirmation">
                                     <StackPanel>
-                                        <TextBlock Text="My old phone company has released my phones so they can be set up with FieldPulse."
+                                        <TextBlock Text="My phones have been released from my old provider's auto-provisioning."
                                                    TextWrapping="Wrap" FontSize="12" FontWeight="SemiBold"/>
                                         <TextBlock TextWrapping="Wrap" FontSize="10.5" Foreground="#8C959F" Margin="0,3,0,0">
-                                            When phones are connected to another provider, that provider controls them. They need to
-                                            'release' or 'deprovision' the phones before FieldPulse can configure them. Call your old
-                                            provider and ask them to: remove the phones from their system, clear any setup passwords
-                                            they put on the phones, and confirm the phones are no longer tied to their service.
+                                            When phones are locked to another provider, that provider controls them automatically —
+                                            even after a reboot. Your old provider must remove the phones from their system so
+                                            FieldPulse can take over. Ask them to release the phones from auto-provisioning.
                                         </TextBlock>
                                     </StackPanel>
                                 </CheckBox>
@@ -538,10 +515,9 @@
                                     <TextBlock TextWrapping="Wrap" FontSize="10.5" Foreground="#57606A" Margin="4,4,0,4">
                                         Previous provider must deprovision all devices: remove SIP registrations,
                                         clear auto-provisioning server URLs (DHCP Option 66 / Option 160), and
-                                        release any provisioning or admin passwords. If phones were using
-                                        zero-touch provisioning (RPS/GDMS/ZTP), the redirect records must be
-                                        deleted from the manufacturer's provisioning portal. Without this,
-                                        phones will re-register to the old provider after a reboot.
+                                        delete any zero-touch provisioning redirect records (RPS/GDMS/ZTP) from
+                                        the manufacturer's portal. Without this, phones will re-register to the
+                                        old provider on every reboot.
                                     </TextBlock>
                                 </Expander>
 

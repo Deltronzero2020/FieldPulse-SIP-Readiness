@@ -122,7 +122,6 @@ public class OnboardingData
     public string PreferredTime  { get; set; } = "";
     public string Attendees      { get; set; } = "";
     public bool   ConfirmedNewPhones              { get; set; }
-    public bool   ConfirmedFormerProvider         { get; set; }
     public bool   ConfirmedPhonesReleased         { get; set; }
     public bool   ConfirmedProvisioningPasswords  { get; set; }
     public bool   ConfirmedFactoryReset           { get; set; }

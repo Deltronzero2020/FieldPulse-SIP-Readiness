@@ -1,0 +1,53 @@
+# Auto-tags the repo on every push to main using the <Version> in the csproj.
+# If a tag for that version already exists, nothing happens (no duplicate releases).
+# To release a new version: bump <Version> in src/FieldPulse-SIP-Readiness.csproj,
+# commit, and push to main — the rest is automatic.
+
+name: Auto Tag on Version Bump
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  auto-tag:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # need full history to check existing tags
+
+      - name: Read version from csproj
+        id: get_version
+        run: |
+          VERSION=$(grep -oP '(?<=<Version>)[^<]+' src/FieldPulse-SIP-Readiness.csproj)
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=v$VERSION"    >> "$GITHUB_OUTPUT"
+
+      - name: Check if tag already exists
+        id: check_tag
+        run: |
+          TAG="${{ steps.get_version.outputs.tag }}"
+          if git rev-parse "$TAG" >/dev/null 2>&1; then
+            echo "exists=true"  >> "$GITHUB_OUTPUT"
+            echo "Tag $TAG already exists — skipping."
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+            echo "Tag $TAG not found — will create it."
+          fi
+
+      - name: Create and push tag
+        if: steps.check_tag.outputs.exists == 'false'
+        run: |
+          TAG="${{ steps.get_version.outputs.tag }}"
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag "$TAG"
+          git push origin "$TAG"
+          echo "Created and pushed tag $TAG — release workflow will now start."
